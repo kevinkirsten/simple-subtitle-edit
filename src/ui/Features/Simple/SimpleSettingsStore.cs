@@ -14,6 +14,34 @@ public static class SimpleSettingsStore
 {
     public static string FileName => Path.Combine(Se.DataFolder, "simple-subtitle-edit.json");
 
+    public static string PlexFileName => Path.Combine(Se.DataFolder, "simple-subtitle-edit-plex.json");
+
+    public static PlexSettings LoadPlex()
+    {
+        try
+        {
+            return File.Exists(PlexFileName)
+                ? JsonSerializer.Deserialize<PlexSettings>(File.ReadAllText(PlexFileName)) ?? new PlexSettings()
+                : new PlexSettings();
+        }
+        catch (Exception)
+        {
+            return new PlexSettings();
+        }
+    }
+
+    public static void SavePlex(PlexSettings settings) => WritePrivate(PlexFileName, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
+
+    private static void WritePrivate(string fileName, string json)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(fileName)!);
+        File.WriteAllText(fileName, json);
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(fileName, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+    }
+
     public static string OnlineCacheFolder => Path.Combine(Path.GetTempPath(), "simple-subtitle-edit", "opensubtitles");
 
     public static OpenSubtitlesSettings Load()
@@ -30,13 +58,6 @@ public static class SimpleSettingsStore
         }
     }
 
-    public static void Save(OpenSubtitlesSettings settings)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(FileName)!);
-        File.WriteAllText(FileName, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
-        if (!OperatingSystem.IsWindows())
-        {
-            File.SetUnixFileMode(FileName, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-        }
-    }
+    public static void Save(OpenSubtitlesSettings settings) =>
+        WritePrivate(FileName, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
 }

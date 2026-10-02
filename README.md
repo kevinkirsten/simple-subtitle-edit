@@ -150,8 +150,13 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
    idioma já existe e vai ser substituída, quais ficam, e apaga o `.srt`. Outros formatos de
    vídeo salvam ao lado. As
    legendas de imagem do arquivo ficam. Da próxima vez, essa faixa aparece como **NO VÍDEO** e a
-   edição volta para dentro do arquivo. Falas depois do fim do vídeo são cortadas, e o Plex do
-   mesmo computador é avisado para recarregar.
+   edição volta para dentro do arquivo. Falas depois do fim do vídeo são cortadas, e o Plex é
+   avisado para recarregar o vídeo.
+
+**Plex (⚙ › PLEX):** **ENTRAR COM PLEX** funciona com qualquer servidor (este computador, NAS,
+Docker): você autoriza no navegador e o servidor é escolhido sozinho. **DETECTAR** acha um Plex
+neste computador. O vídeo é encontrado pela pasta e pelo nome do arquivo, então funciona mesmo
+quando o Plex enxerga os arquivos em outro caminho.
 
 | Tecla | Ação |
 |---|---|

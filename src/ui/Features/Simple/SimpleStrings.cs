@@ -70,6 +70,18 @@ public sealed class SimpleStrings
     public required string TrackText { get; init; }
     public required string SaveLanguageInfo { get; init; }
     public required string OnlineLanguageInfo { get; init; }
+    public required string PlexSection { get; init; }
+    public required string PlexServer { get; init; }
+    public required string PlexDetect { get; init; }
+    public required string PlexSignIn { get; init; }
+    public required string PlexConnected { get; init; }
+    public required string PlexNotConnected { get; init; }
+    public required string PlexChecking { get; init; }
+    public required string PlexWaitingBrowser { get; init; }
+    public required string PlexSignInTimeout { get; init; }
+    public required string PlexNoServer { get; init; }
+    public required string PlexDetectFailed { get; init; }
+    public required string PlexInfo { get; init; }
     public required string TrackImage { get; init; }
     public required string Embedded { get; init; }
     public required string PlexNotified { get; init; }
@@ -148,6 +160,18 @@ public sealed class SimpleStrings
         TrackText = "text",
         SaveLanguageInfo = "The language is written as the track's tag (pt-BR, en, es-419…), which Plex and players use to pick and name the subtitle. Variants are different tracks: saving pt-BR never touches a pt-PT track. Only mkv files can hold it; other formats save the .srt next to the video.",
         OnlineLanguageInfo = "Which subtitles FIND ONLINE asks OpenSubtitles.com for. Some languages have their own code there (Latin American Spanish is \"ea\", Chinese is \"zh-cn\" / \"zh-tw\"); the app converts it, you only pick the name.",
+        PlexSection = "PLEX",
+        PlexServer = "SERVER",
+        PlexDetect = "DETECT",
+        PlexSignIn = "SIGN IN WITH PLEX",
+        PlexConnected = "✓ Connected to Plex: {0}",
+        PlexNotConnected = "Not connected: {0}",
+        PlexChecking = "Checking…",
+        PlexWaitingBrowser = "Approve Simple Subtitle Edit in the browser page that opened…",
+        PlexSignInTimeout = "Sign-in was not approved in time. Try again.",
+        PlexNoServer = "This Plex account has no server.",
+        PlexDetectFailed = "No Plex Media Server found on this computer. Use SIGN IN WITH PLEX, or type the server address.",
+        PlexInfo = "After each SAVE, Plex is told to reload the video so the new subtitle shows up on the TV, phone and console. SIGN IN WITH PLEX works with any server (this computer, a NAS, Docker): approve it in the browser and the server is picked for you. DETECT finds a Plex on this computer. Without Plex, saving works the same.",
         TrackImage = "image",
         Embedded = "Saved inside the video as track {0}.",
         PlexNotified = " Plex was told to reload it.",
@@ -227,6 +251,18 @@ public sealed class SimpleStrings
         TrackText = "texto",
         SaveLanguageInfo = "O idioma vira a marca da faixa (pt-BR, en, es-419…), que o Plex e os players usam para escolher e nomear a legenda. Variantes são faixas diferentes: salvar pt-BR nunca mexe numa faixa pt-PT. Só arquivos mkv guardam a faixa; nos outros formatos o .srt fica ao lado do vídeo.",
         OnlineLanguageInfo = "Em qual idioma o BUSCAR ONLINE procura legendas no OpenSubtitles.com. Alguns idiomas têm código próprio lá (espanhol latino é \"ea\", chinês é \"zh-cn\" / \"zh-tw\"); o app converte, você só escolhe o nome.",
+        PlexSection = "PLEX",
+        PlexServer = "SERVIDOR",
+        PlexDetect = "DETECTAR",
+        PlexSignIn = "ENTRAR COM PLEX",
+        PlexConnected = "✓ Conectado ao Plex: {0}",
+        PlexNotConnected = "Não conectado: {0}",
+        PlexChecking = "Conferindo…",
+        PlexWaitingBrowser = "Autorize o Simple Subtitle Edit na página que abriu no navegador…",
+        PlexSignInTimeout = "O login não foi autorizado a tempo. Tente de novo.",
+        PlexNoServer = "Esta conta do Plex não tem servidor.",
+        PlexDetectFailed = "Nenhum Plex Media Server neste computador. Use ENTRAR COM PLEX ou digite o endereço do servidor.",
+        PlexInfo = "Depois de cada SALVAR, o Plex é avisado para recarregar o vídeo, e a legenda nova aparece na TV, no celular e no console. ENTRAR COM PLEX funciona com qualquer servidor (este computador, um NAS, Docker): autorize no navegador e o servidor é escolhido sozinho. DETECTAR acha um Plex neste computador. Sem Plex, salvar funciona igual.",
         TrackImage = "imagem",
         Embedded = "Salva dentro do vídeo como faixa {0}.",
         PlexNotified = " O Plex foi avisado para recarregar.",

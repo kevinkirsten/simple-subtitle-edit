@@ -1,7 +1,7 @@
+using Nikse.SubtitleEdit.UiLogic.SimpleSync;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,76 +10,46 @@ using System.Xml.Linq;
 namespace Nikse.SubtitleEdit.Features.Simple;
 
 /// <summary>
-/// Tells a Plex Media Server on this computer that a video's subtitles changed: a scan of the
-/// video's folder (picks up a rewritten mkv or a new .srt) and a metadata refresh of the item
-/// (re-reads a .srt that only changed its content). Silent when there is no local Plex.
+/// Tells Plex a video's subtitles changed. Uses the server set in ⚙ (any machine: this one, a
+/// NAS, Docker); with nothing set, tries a Plex on this computer. Silent when there is no Plex.
 /// </summary>
 public static class PlexNotifier
 {
-    private const string BaseUrl = "http://127.0.0.1:32400";
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
+    public static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
-    /// <returns>True when Plex was found and told.</returns>
+    /// <returns>True when Plex was told.</returns>
     public static async Task<bool> RefreshAsync(string videoFileName, CancellationToken token = default)
     {
-        var plexToken = FindToken();
-        if (string.IsNullOrEmpty(plexToken))
+        var settings = SimpleSettingsStore.LoadPlex();
+        if (!settings.IsConfigured)
+        {
+            settings = DetectLocal() ?? settings;
+        }
+
+        if (!settings.IsConfigured)
         {
             return false;
         }
 
         try
         {
-            var sections = XDocument.Parse(await GetAsync("/library/sections", plexToken, token));
-            var full = Path.GetFullPath(videoFileName);
-            var section = sections.Descendants("Directory")
-                .Select(d => (Key: (string?)d.Attribute("key"), Paths: d.Elements("Location").Select(l => (string?)l.Attribute("path")).OfType<string>().ToList()))
-                .FirstOrDefault(s => s.Paths.Any(p => full.StartsWith(p.TrimEnd('/', '\\') + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)));
-            if (section.Key == null)
-            {
-                return false;
-            }
-
-            var folder = Path.GetDirectoryName(full)!;
-            await GetAsync($"/library/sections/{section.Key}/refresh?path={Uri.EscapeDataString(folder)}", plexToken, token);
-
-            // Find the item whose media part is this file and refresh it.
-            var all = XDocument.Parse(await GetAsync($"/library/sections/{section.Key}/all?type=4", plexToken, token));
-            var item = all.Descendants("Video")
-                .FirstOrDefault(v => v.Descendants("Part").Any(p => string.Equals((string?)p.Attribute("file"), full, StringComparison.OrdinalIgnoreCase)));
-            if (item == null)
-            {
-                all = XDocument.Parse(await GetAsync($"/library/sections/{section.Key}/all?type=1", plexToken, token));
-                item = all.Descendants("Video")
-                    .FirstOrDefault(v => v.Descendants("Part").Any(p => string.Equals((string?)p.Attribute("file"), full, StringComparison.OrdinalIgnoreCase)));
-            }
-
-            if ((string?)item?.Attribute("ratingKey") is { } key)
-            {
-                using var request = new HttpRequestMessage(HttpMethod.Put, $"{BaseUrl}/library/metadata/{key}/refresh");
-                request.Headers.Add("X-Plex-Token", plexToken);
-                await Http.SendAsync(request, token);
-            }
-
-            return true;
+            return await new PlexClient(Http, settings.Url, settings.Token).RefreshAsync(videoFileName, token);
         }
         catch (Exception)
         {
-            return false; // Plex not running or unreachable: the file is saved anyway
+            return false; // Plex down or unreachable: the subtitle is saved anyway
         }
     }
 
-    private static async Task<string> GetAsync(string path, string token, CancellationToken cancel)
+    /// <summary>A Plex Media Server on this computer, with the token from its own settings. Null if none.</summary>
+    public static PlexSettings? DetectLocal()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, BaseUrl + path);
-        request.Headers.Add("X-Plex-Token", token);
-        using var response = await Http.SendAsync(request, cancel);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync(cancel);
+        var token = FindLocalToken();
+        return string.IsNullOrEmpty(token) ? null : new PlexSettings { Url = PlexSettings.DefaultUrl, Token = token };
     }
 
     /// <summary>The local server's token, from where Plex keeps it on each system.</summary>
-    public static string? FindToken()
+    public static string? FindLocalToken()
     {
         try
         {
@@ -103,6 +73,7 @@ public static class PlexNotifier
                 return Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Plex, Inc.\Plex Media Server", "PlexOnlineToken", null) as string;
             }
 
+            // Linux: package install. Usually readable only by the "plex" user, hence SIGN IN WITH PLEX.
             var prefs = "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Preferences.xml";
             return File.Exists(prefs) ? (string?)XDocument.Load(prefs).Root?.Attribute("PlexOnlineToken") : null;
         }
