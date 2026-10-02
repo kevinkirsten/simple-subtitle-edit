@@ -144,6 +144,19 @@ public static class BrutalTheme
 
     public static void SetText(Button button, string text) => button.Content = ButtonLabel(text);
 
+    /// <summary>A vector icon as button content, colored like the button (the app's theme also paints icons).</summary>
+    public static Control ButtonIcon(string iconName, double size) => new Optris.Icons.Avalonia.Icon
+    {
+        Value = iconName,
+        FontSize = size,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center,
+        [!Optris.Icons.Avalonia.Icon.ForegroundProperty] = new Avalonia.Data.Binding(nameof(ContentPresenter.Foreground))
+        {
+            RelativeSource = new Avalonia.Data.RelativeSource(Avalonia.Data.RelativeSourceMode.FindAncestor) { AncestorType = typeof(ContentPresenter) },
+        },
+    };
+
     /// <summary>A drop-down in the same look; items shown as dark mono text in every state.</summary>
     public static ComboBox ComboBox(string automationId, double minWidth)
     {

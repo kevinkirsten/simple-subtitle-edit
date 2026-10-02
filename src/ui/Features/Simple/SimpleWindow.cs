@@ -259,8 +259,7 @@ public class SimpleWindow : Window
         findOnline.Click += async (_, _) => await FindOnlineAsync();
         findOnline.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.HasVideo)));
         var onlineSettings = BrutalTheme.Button(string.Empty, "OnlineSettings");
-        Optris.Icons.Avalonia.Attached.SetIcon(onlineSettings, Nikse.SubtitleEdit.Logic.IconNames.Settings); // the font's ⚙ sat above center
-        onlineSettings.FontSize = 22;
+        onlineSettings.Content = BrutalTheme.ButtonIcon(Nikse.SubtitleEdit.Logic.IconNames.Settings, 22); // the font's ⚙ sat above center
         onlineSettings.Padding = new Thickness(12, 0);
         ToolTip.SetTip(onlineSettings, strings.OnlineSettingsTitle);
         onlineSettings.Click += async (_, _) => await EditOnlineSettingsAsync();

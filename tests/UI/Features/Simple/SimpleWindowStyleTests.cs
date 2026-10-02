@@ -73,6 +73,10 @@ public class SimpleWindowStyleTests
                 new Avalonia.Styling.Setter(TextBlock.FontFamilyProperty, new FontFamily("Helvetica Neue, Arial, sans-serif")),
             },
         },
+        new Avalonia.Styling.Style(x => x.OfType<Optris.Icons.Avalonia.Icon>())
+        {
+            Setters = { new Avalonia.Styling.Setter(Optris.Icons.Avalonia.Icon.ForegroundProperty, new SolidColorBrush(Color.Parse("#DDDDDD"))) },
+        },
     };
 
     [AvaloniaFact]
@@ -104,6 +108,8 @@ public class SimpleWindowStyleTests
             }
 
             Assert.True(checkedLabels >= 10, $"only {checkedLabels} labels checked");
+            var gear = window.GetVisualDescendants().OfType<Optris.Icons.Avalonia.Icon>().Single();
+            Assert.Equal(((ISolidColorBrush)BrutalTheme.Ink).Color, ((ISolidColorBrush)gear.Foreground!).Color);
             AssertReadableOnHover(window);
             window.Close();
         }
