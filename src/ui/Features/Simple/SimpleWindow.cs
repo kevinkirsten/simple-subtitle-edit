@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Microsoft.Extensions.DependencyInjection;
 using Nikse.SubtitleEdit.Controls.VideoPlayer;
 using Nikse.SubtitleEdit.Features.Main;
@@ -65,7 +66,9 @@ public class SimpleWindow : Window
         if (createPlayer)
         {
             LibMpvDynamicPlayer.MpvPath = Se.DataFolder;
-            _videoPlayer = InitVideoPlayer.MakeVideoPlayer();
+            // Non-native rendering on Windows: the native mpv window takes keyboard focus when
+            // clicked, and SPACE and the other shortcuts would stop reaching this window.
+            _videoPlayer = InitVideoPlayer.MakeVideoPlayerPreferNonNative();
             _videoPlayer.HideVideoControls();
             player = _videoPlayer.VideoPlayer;
         }
@@ -315,6 +318,7 @@ public class SimpleWindow : Window
         AddHandler(DragDrop.DragOverEvent, OnDragOver, RoutingStrategies.Bubble);
         AddHandler(DragDrop.DropEvent, OnDrop, RoutingStrategies.Bubble);
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        AddHandler(KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
 
         // Idle: a light poll notices play/pause from the keyboard or the player itself.
         // Playing: one update per screen frame (up to 120 Hz), see OnFrame.
@@ -716,9 +720,27 @@ public class SimpleWindow : Window
     private static bool IsSubtitleFile(string path) =>
         SubtitleSourceFinder.SubtitleFileExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Keys typed into a text field, or used inside an open drop-down, are theirs. Everything
+    /// else is a window shortcut - including SPACE on a focused button or the closed subtitle
+    /// picker, which would otherwise press that button again or open the picker.
+    /// </summary>
+    private static bool BelongsToFocusedControl(KeyEventArgs e) =>
+        e.Source is TextBox ||
+        (e.Source as Visual)?.FindAncestorOfType<ComboBox>(includeSelf: true) is { IsDropDownOpen: true };
+
+    private void OnKeyUp(object? sender, KeyEventArgs e)
+    {
+        // Buttons click on SPACE *release*: swallow it, the press already toggled playback.
+        if (e.Key == Key.Space && !BelongsToFocusedControl(e))
+        {
+            e.Handled = true;
+        }
+    }
+
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Source is TextBox or ComboBox)
+        if (BelongsToFocusedControl(e))
         {
             return;
         }
