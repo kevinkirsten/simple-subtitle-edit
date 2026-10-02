@@ -24,10 +24,14 @@ public class UnsavedDialog : Window
         SizeToContent = SizeToContent.WidthAndHeight;
         CanResize = false;
         Background = BrutalTheme.PaperDim;
+        FontFamily = BrutalTheme.Mono;
+        RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+        Styles.Add(BrutalTheme.CreateStyles());
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
         var save = BrutalTheme.Button(strings.SaveAndGo, "DialogSave");
         save.Background = BrutalTheme.Marker;
+        save.Classes.Add(BrutalTheme.PrimaryClass);
         save.Click += (_, _) => CloseWith(LeaveChoice.Save);
         var discard = BrutalTheme.Button(strings.DiscardAndGo, "DialogDiscard");
         discard.Click += (_, _) => CloseWith(LeaveChoice.Discard);

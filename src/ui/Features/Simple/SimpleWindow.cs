@@ -57,6 +57,7 @@ public class SimpleWindow : Window
         Background = BrutalTheme.PaperDim;
         FontFamily = BrutalTheme.Mono;
         RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+        Styles.Add(BrutalTheme.CreateStyles());
 
         if (createPlayer)
         {
@@ -121,6 +122,7 @@ public class SimpleWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
             },
         };
+        _dropHint.Cursor = BrutalTheme.Hand;
         _dropHint.PointerPressed += async (_, _) => await PickVideoAsync();
 
         var videoArea = _videoArea = new Grid { Background = Brushes.Black };
@@ -217,7 +219,9 @@ public class SimpleWindow : Window
             CornerRadius = new CornerRadius(0),
             Background = BrutalTheme.Paper,
             MinHeight = 38,
+            Cursor = BrutalTheme.Hand,
         };
+        combo.Classes.Add(BrutalTheme.ButtonClass);
         combo.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<SubtitleSource>((source, _) => SourceItem(source));
         combo.Bind(ItemsControl.ItemsSourceProperty, new Binding(nameof(SimpleViewModel.Sources)));
         combo.Bind(SelectingItemsControl.SelectedItemProperty, new Binding(nameof(SimpleViewModel.SelectedSource)) { Mode = BindingMode.TwoWay });
@@ -226,6 +230,7 @@ public class SimpleWindow : Window
         otherFile.Click += async (_, _) => await PickSubtitleAsync();
         var save = BrutalTheme.Button(strings.Save, "Save");
         save.Background = BrutalTheme.Marker;
+        save.Classes.Add(BrutalTheme.PrimaryClass);
         save.Click += (_, _) => SaveNow();
         var subtitleRow = Row(new Control[] { subtitleLabel, combo, otherFile, save }, stretchIndex: 1);
 

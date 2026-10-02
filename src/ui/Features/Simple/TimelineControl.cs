@@ -45,7 +45,7 @@ public class TimelineControl : Control
     {
         ClipToBounds = true;
         Focusable = true;
-        Cursor = new Cursor(StandardCursorType.Hand);
+        Cursor = BrutalTheme.Hand;
         Avalonia.Automation.AutomationProperties.SetAutomationId(this, "Timeline");
     }
 

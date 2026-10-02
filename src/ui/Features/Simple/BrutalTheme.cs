@@ -1,7 +1,11 @@
 using Avalonia;
+using System;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 
 namespace Nikse.SubtitleEdit.Features.Simple;
 
@@ -16,11 +20,61 @@ public static class BrutalTheme
     public static readonly IBrush Wave = new SolidColorBrush(Color.Parse("#3A9A4A"));
     public static readonly IBrush Cursor = new SolidColorBrush(Color.Parse("#E5322D"));
     public static readonly IBrush Viewport = new SolidColorBrush(Color.Parse("#330057FF"));
+    public static readonly IBrush Muted = new SolidColorBrush(Color.Parse("#9A9A94"));
     public static readonly IPen InkPen = new Pen(Ink, 2);
     public static readonly IPen ThinInkPen = new Pen(Ink, 1);
     public static readonly IPen CursorPen = new Pen(Cursor, 2);
     public static readonly FontFamily Mono = new("Menlo, Consolas, DejaVu Sans Mono, monospace");
     public static readonly Thickness Line = new(2);
+
+    public const string ButtonClass = "brutal";
+    public const string PrimaryClass = "primary";
+
+    /// <summary>
+    /// Hover, pressed and disabled looks. The Fluent theme paints those states on the button's
+    /// inner ContentPresenter, over the button's own Background/Foreground, which turned the
+    /// text white on a light background on hover. These styles target the same presenter.
+    /// </summary>
+    public static Styles CreateStyles()
+    {
+        static Style Presenter(Func<Selector?, Selector> state, IBrush background, IBrush foreground, IBrush border) => new(x =>
+            state(x.OfType<Button>().Class(ButtonClass)).Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"))
+        {
+            Setters =
+            {
+                new Setter(ContentPresenter.BackgroundProperty, background),
+                new Setter(ContentPresenter.ForegroundProperty, foreground),
+                new Setter(ContentPresenter.BorderBrushProperty, border),
+            },
+        };
+
+        return new Styles
+        {
+            Presenter(x => x.Class(":pointerover"), Marker, Ink, Ink),
+            Presenter(x => x.Class(":pressed"), MarkerActive, Ink, Ink),
+            Presenter(x => x.Class(PrimaryClass).Class(":pointerover"), MarkerActive, Ink, Ink),
+            Presenter(x => x.Class(":disabled"), PaperDim, Muted, Muted),
+
+            new Style(x => x.OfType<ComboBox>().Class(ButtonClass).Class(":pointerover").Template().OfType<Border>().Name("Background"))
+            {
+                Setters =
+                {
+                    new Setter(Border.BackgroundProperty, Marker),
+                    new Setter(Border.BorderBrushProperty, Ink),
+                },
+            },
+            new Style(x => x.OfType<ComboBoxItem>().Class(":pointerover").Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"))
+            {
+                Setters = { new Setter(ContentPresenter.BackgroundProperty, Marker), new Setter(ContentPresenter.ForegroundProperty, Ink) },
+            },
+            new Style(x => x.OfType<ComboBoxItem>().Class(":selected").Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"))
+            {
+                Setters = { new Setter(ContentPresenter.BackgroundProperty, PaperDim), new Setter(ContentPresenter.ForegroundProperty, Ink) },
+            },
+        };
+    }
+
+    public static readonly Cursor Hand = new(StandardCursorType.Hand);
 
     public static Border Box(Control child, Thickness? padding = null) => new()
     {
@@ -48,7 +102,9 @@ public static class BrutalTheme
             MinWidth = 44,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Stretch,
+            Cursor = Hand,
         };
+        button.Classes.Add(ButtonClass);
         Avalonia.Automation.AutomationProperties.SetAutomationId(button, automationId);
         return button;
     }

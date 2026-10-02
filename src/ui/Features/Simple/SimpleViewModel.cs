@@ -167,7 +167,11 @@ public partial class SimpleViewModel : ObservableObject
             }
 
             Peaks = peaks;
-            StatusText = peaks == null ? Strings.NoWaveform : previousStatus;
+            // Only touch the status if nothing newer (e.g. "Saved") was written meanwhile.
+            if (StatusText == Strings.LoadingWaveform)
+            {
+                StatusText = peaks == null ? Strings.NoWaveform : previousStatus;
+            }
             UpdateDurationFallback();
             RaiseRedraw();
         }
@@ -177,7 +181,10 @@ public partial class SimpleViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusText = Strings.NoWaveform + " " + ex.Message;
+            if (StatusText == Strings.LoadingWaveform)
+            {
+                StatusText = Strings.NoWaveform + " " + ex.Message;
+            }
         }
     }
 

@@ -32,7 +32,7 @@ public class MinimapControl : Control
     public MinimapControl()
     {
         ClipToBounds = true;
-        Cursor = new Cursor(StandardCursorType.Hand);
+        Cursor = BrutalTheme.Hand;
         Avalonia.Automation.AutomationProperties.SetAutomationId(this, "Minimap");
     }
 
