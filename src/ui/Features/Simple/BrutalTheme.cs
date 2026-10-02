@@ -124,6 +124,9 @@ public static class BrutalTheme
     /// The label as its own TextBlock with the font set locally: Subtitle Edit styles every
     /// TextBlock with the UI font, and the one a Button generates for string content took it,
     /// with metrics that put capitals above the middle of the button.
+    /// The color is bound to the button's content presenter (normal, hover, pressed, disabled):
+    /// Subtitle Edit's theme also colors every TextBlock (light grey in dark mode), and a style
+    /// beats the inherited color.
     /// </summary>
     public static TextBlock ButtonLabel(string text) => new()
     {
@@ -133,6 +136,10 @@ public static class BrutalTheme
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center,
         TextAlignment = TextAlignment.Center,
+        [!TextBlock.ForegroundProperty] = new Avalonia.Data.Binding(nameof(ContentPresenter.Foreground))
+        {
+            RelativeSource = new Avalonia.Data.RelativeSource(Avalonia.Data.RelativeSourceMode.FindAncestor) { AncestorType = typeof(ContentPresenter) },
+        },
     };
 
     public static void SetText(Button button, string text) => button.Content = ButtonLabel(text);

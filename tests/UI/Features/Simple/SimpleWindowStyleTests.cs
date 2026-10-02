@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
@@ -40,10 +41,15 @@ public class SimpleWindowStyleTests
 
             var presenter = button.GetVisualDescendants().OfType<ContentPresenter>().First(p => p.Name == "PART_ContentPresenter");
             var label = Avalonia.Automation.AutomationProperties.GetAutomationId(button);
+            var text = button.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault();
             if (button.IsEnabled)
             {
                 Assert.True(button.IsPointerOver, label);
                 Assert.Equal(((ISolidColorBrush)BrutalTheme.Ink).Color, ((ISolidColorBrush)presenter.Foreground!).Color);
+                if (text != null)
+                {
+                    Assert.True(((ISolidColorBrush)BrutalTheme.Ink).Color == ((ISolidColorBrush)text.Foreground!).Color, $"{label}: label text {((ISolidColorBrush)text.Foreground!).Color} on hover");
+                }
                 var background = ((ISolidColorBrush)presenter.Background!).Color;
                 Assert.True(background == ((ISolidColorBrush)BrutalTheme.Marker).Color || background == ((ISolidColorBrush)BrutalTheme.MarkerActive).Color, $"{label}: hover background {background}");
             }
@@ -53,6 +59,57 @@ public class SimpleWindowStyleTests
             }
 
             Assert.Same(BrutalTheme.Hand, button.Cursor);
+        }
+    }
+
+    /// <summary>What Subtitle Edit's dark theme does at startup: every TextBlock light grey, in the UI font.</summary>
+    public static Avalonia.Styling.Styles DarkThemeTextStyle() => new()
+    {
+        new Avalonia.Styling.Style(x => x.OfType<TextBlock>())
+        {
+            Setters =
+            {
+                new Avalonia.Styling.Setter(TextBlock.ForegroundProperty, new SolidColorBrush(Color.Parse("#DDDDDD"))),
+                new Avalonia.Styling.Setter(TextBlock.FontFamilyProperty, new FontFamily("Helvetica Neue, Arial, sans-serif")),
+            },
+        },
+    };
+
+    [AvaloniaFact]
+    public void WithTheAppsDarkThemeStyle_EveryButtonLabelIsDark_DisabledOnesGrey()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var styles = DarkThemeTextStyle();
+        Application.Current!.Styles.Add(styles);
+        try
+        {
+            var window = new SimpleWindow(createPlayer: false, new FakeVideoPlayer()) { Width = 1200, Height = 860 };
+            window.Show();
+            Pump();
+            var buttons = window.GetVisualDescendants().OfType<Button>().Where(b => b.Classes.Contains(BrutalTheme.ButtonClass) && b.IsEffectivelyVisible).ToList();
+            var checkedLabels = 0;
+            foreach (var button in buttons)
+            {
+                var text = button.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault();
+                if (text == null)
+                {
+                    continue;
+                }
+
+                var expected = button.IsEffectivelyEnabled ? BrutalTheme.Ink : BrutalTheme.Muted;
+                var id = Avalonia.Automation.AutomationProperties.GetAutomationId(button);
+                Assert.True(((ISolidColorBrush)expected).Color == ((ISolidColorBrush)text.Foreground!).Color, $"{id}: {((ISolidColorBrush)text.Foreground!).Color}");
+                Assert.Equal(BrutalTheme.Mono, text.FontFamily);
+                checkedLabels++;
+            }
+
+            Assert.True(checkedLabels >= 10, $"only {checkedLabels} labels checked");
+            AssertReadableOnHover(window);
+            window.Close();
+        }
+        finally
+        {
+            Application.Current.Styles.Remove(styles);
         }
     }
 
