@@ -152,7 +152,8 @@ public class SimpleWindow : Window
         videoWithCaption.Children.Add(captionBox);
 
         // --- transport + offset --------------------------------------------------------
-        _playButton = BrutalTheme.Button("▶", "PlayPause");
+        _playButton = BrutalTheme.Button(string.Empty, "PlayPause");
+        SetPlayIcon(playing: false);
         // ▶ and ❚❚ have different widths: a fixed size keeps the bar from shifting on every toggle.
         _playButton.Width = 56;
         _playButton.Padding = new Thickness(0);
@@ -321,7 +322,7 @@ public class SimpleWindow : Window
         _timer.Tick += (_, _) =>
         {
             _vm.Tick();
-            _playButton.Content = _vm.IsPlaying ? "❚❚" : "▶";
+            SetPlayIcon(_vm.IsPlaying);
             if (_vm.IsPlaying && !_frameLoopRunning)
             {
                 _frameLoopRunning = true;
@@ -502,6 +503,36 @@ public class SimpleWindow : Window
     {
         Grid.SetRow(control, row);
         grid.Children.Add(control);
+    }
+
+    // Drawn icons instead of ▶ / ❚❚: font glyphs sit above the middle of the button (the
+    // font leaves room below the baseline), and the two have different widths.
+    private static readonly Geometry PlayGeometry = Geometry.Parse("M 0,0 L 12,7 L 0,14 Z");
+    private static readonly Geometry PauseGeometry = Geometry.Parse("M 0,0 H 4 V 14 H 0 Z M 8,0 H 12 V 14 H 8 Z");
+    private bool? _playIconPlaying;
+
+    private void SetPlayIcon(bool playing)
+    {
+        if (_playIconPlaying == playing)
+        {
+            return;
+        }
+
+        _playIconPlaying = playing;
+        _playButton.Content = new Avalonia.Controls.Shapes.Path
+        {
+            Data = playing ? PauseGeometry : PlayGeometry,
+            Fill = BrutalTheme.Ink,
+            Width = 12,
+            Height = 14,
+            Stretch = Stretch.None,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            // The triangle's visual weight is on its left edge: nudge it to look centered.
+            Margin = playing ? new Thickness(0) : new Thickness(2, 0, 0, 0),
+        };
+        _playButton.VerticalContentAlignment = VerticalAlignment.Center;
+        Avalonia.Automation.AutomationProperties.SetName(_playButton, playing ? "Pause" : "Play");
     }
 
     private void OnFrame(TimeSpan _)

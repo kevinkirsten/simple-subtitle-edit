@@ -185,13 +185,19 @@ public class SimpleWindowStyleTests
 
             await System.Threading.Tasks.Task.Delay(150, TestContext.Current.CancellationToken); // the idle poll updates the glyph
             Pump();
-            Assert.Equal(playing ? "❚❚" : "▶", play.Content);
+            Assert.Equal(playing ? "Pause" : "Play", Avalonia.Automation.AutomationProperties.GetName(play));
             widthPlaying = widthPlaying == 0 ? play.Bounds.Width : widthPlaying;
             Assert.Equal(widthPlaying, play.Bounds.Width);
             offsetXs.Add(offset.TranslatePoint(new Point(0, 0), window)!.Value.X);
         }
 
         Assert.Single(offsetXs.Distinct());
+
+        // The icon sits in the middle of the button, both ways.
+        var icon = play.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single();
+        var iconCenter = icon.TranslatePoint(new Point(icon.Bounds.Width / 2, icon.Bounds.Height / 2), play)!.Value;
+        Assert.InRange(iconCenter.Y, play.Bounds.Height / 2 - 1, play.Bounds.Height / 2 + 1);
+        Assert.InRange(iconCenter.X, play.Bounds.Width / 2 - 2, play.Bounds.Width / 2 + 2);
         window.Close();
     }
 
