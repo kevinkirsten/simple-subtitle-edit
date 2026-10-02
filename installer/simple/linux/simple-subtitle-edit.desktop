@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Simple Subtitle Edit
+GenericName=Subtitle sync
+Comment=Fix out-of-sync subtitles: line them up with the speech and save
+Exec=simple-subtitle-edit %F
+Icon=simple-subtitle-edit
+Terminal=false
+Categories=AudioVideo;Video;
+MimeType=video/x-matroska;video/mp4;video/x-msvideo;video/webm;application/x-subrip;
+Keywords=subtitle;srt;sync;offset;plex;

@@ -1,0 +1,194 @@
+name: Release Simple Subtitle Edit
+
+# Builds the installers for macOS (DMG), Windows (Setup + zip) and Linux (deb, rpm, tar.gz),
+# each with what the app needs inside or declared as package dependencies, and publishes them
+# as a GitHub release. Run it from Actions › Release Simple Subtitle Edit › Run workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 0.1.0)'
+        required: true
+        default: '0.1.0'
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        default: true
+      publish:
+        description: 'Create the GitHub release (off = only build, artifacts on the run)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build app and DMG
+        run: installer/simple/macos/make-dmg.sh ${{ matrix.arch }} ${{ inputs.version }} ./dist
+      - uses: actions/upload-artifact@v5
+        with:
+          name: macos-${{ matrix.arch }}
+          path: ./dist/*.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download mpv, ffmpeg and mkvmerge
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = "https://github.com/SubtitleEdit/support-files/releases/download/libmpv-2026-08-14b"
+          Invoke-WebRequest "$base/libmpv2-win64.zip" -OutFile libmpv-x64.zip
+          Invoke-WebRequest "$base/libmpv2-win-arm64.zip" -OutFile libmpv-arm64.zip
+          Expand-Archive libmpv-x64.zip -DestinationPath deps/mpv-x64
+          Expand-Archive libmpv-arm64.zip -DestinationPath deps/mpv-arm64
+
+          $ff = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
+          Invoke-WebRequest "$ff/ffmpeg-master-latest-win64-gpl.zip" -OutFile ffmpeg-x64.zip
+          Invoke-WebRequest "$ff/ffmpeg-master-latest-winarm64-gpl.zip" -OutFile ffmpeg-arm64.zip
+          Expand-Archive ffmpeg-x64.zip -DestinationPath deps/ffmpeg-x64
+          Expand-Archive ffmpeg-arm64.zip -DestinationPath deps/ffmpeg-arm64
+
+          # MKVToolNix ships x64 only; Windows on ARM runs it emulated.
+          $mkv = "https://mkvtoolnix.download/windows/releases/102.0/mkvtoolnix-64-bit-102.0.zip"
+          Invoke-WebRequest $mkv -OutFile mkvtoolnix.zip
+          $expected = ((Invoke-WebRequest "$mkv.sha256").Content -split '\s+')[0]
+          $actual = (Get-FileHash mkvtoolnix.zip -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw "mkvtoolnix checksum mismatch" }
+          Expand-Archive mkvtoolnix.zip -DestinationPath deps/mkvtoolnix
+          & deps/mkvtoolnix/mkvtoolnix/mkvmerge.exe --version
+
+      - name: Publish (x64, arm64)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($arch in 'x64', 'arm64') {
+            $out = "publish/windows-$arch"
+            dotnet publish src/ui/UI.csproj -c Release -r "win-$arch" --self-contained true `
+              -p:PublishSingleFile=true -p:DebugSymbols=false -p:DebugType=none `
+              -p:Version=${{ inputs.version }} -p:InformationalVersion=${{ inputs.version }} -o $out
+            Get-ChildItem $out -Filter *.pdb -Recurse | Remove-Item -Force
+            Remove-Item "$out/libse.xml" -ErrorAction SilentlyContinue
+            Copy-Item "deps/mpv-$arch/*" $out
+            $ffmpeg = Get-ChildItem "deps/ffmpeg-$arch" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+            Copy-Item $ffmpeg.FullName $out
+            New-Item -ItemType Directory -Force "$out/mkvtoolnix" | Out-Null
+            Copy-Item deps/mkvtoolnix/mkvtoolnix/mkvmerge.exe "$out/mkvtoolnix/"
+            Copy-Item LICENSE "$out/LICENSE.txt"
+          }
+
+      - name: Self-check (x64 tools run)
+        run: |
+          & publish/windows-x64/ffmpeg.exe -hide_banner -version | Select-Object -First 1
+          & publish/windows-x64/mkvtoolnix/mkvmerge.exe --version
+
+      - name: Install Inno Setup 6.7.3
+        run: |
+          Invoke-WebRequest "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe" -OutFile "$env:RUNNER_TEMP\innosetup.exe"
+          Start-Process "$env:RUNNER_TEMP\innosetup.exe" -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/SP-" -Wait
+
+      - name: Installers and zips
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force dist | Out-Null
+          foreach ($arch in 'x64', 'arm64') {
+            & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=${{ inputs.version }}" "/DArch=$arch" "/DSourceDir=..\..\..\publish\windows-$arch" installer\simple\windows\SimpleSubtitleEdit.iss
+            if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $arch" }
+            Compress-Archive "publish/windows-$arch/*" "dist/Simple-Subtitle-Edit-${{ inputs.version }}-Windows-$arch-portable.zip"
+          }
+          Get-ChildItem dist
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: windows
+          path: ./dist/*
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm
+      - name: Publish and package (x64, arm64)
+        run: |
+          set -e
+          for arch in x64 arm64; do
+            dotnet publish src/ui/UI.csproj -c Release -r "linux-$arch" --self-contained true \
+              -p:PublishSingleFile=true -p:DebugSymbols=false -p:DebugType=none \
+              -p:Version=${{ inputs.version }} -p:InformationalVersion=${{ inputs.version }} -o "publish/linux-$arch"
+            find "publish/linux-$arch" -name '*.pdb' -delete
+            rm -f "publish/linux-$arch/libse.xml"
+            installer/simple/linux/make-packages.sh "$arch" ${{ inputs.version }} "publish/linux-$arch" ./dist
+          done
+      - name: Self-check (x64 deb installs and starts)
+        run: |
+          set -e
+          sudo apt-get install -y -qq ./dist/simple-subtitle-edit_${{ inputs.version }}_amd64.deb xvfb
+          which simple-subtitle-edit mkvmerge ffmpeg
+          ls /usr/lib/x86_64-linux-gnu/libmpv.so.2
+          # Starts and stays up for a few seconds without a display error.
+          timeout 15 xvfb-run -a simple-subtitle-edit || [ $? -eq 124 ]
+      - uses: actions/upload-artifact@v5
+        with:
+          name: linux
+          path: ./dist/*
+
+  release:
+    if: ${{ inputs.publish }}
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: ./artifacts
+          merge-multiple: true
+      - name: List
+        run: ls -la ./artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Simple Subtitle Edit ${{ inputs.version }}
+          prerelease: ${{ inputs.prerelease }}
+          files: ./artifacts/*
+          body: |
+            ## Download
+
+            | System | File |
+            |---|---|
+            | **macOS** (Apple Silicon, M1–M5) | `Simple-Subtitle-Edit-${{ inputs.version }}-macOS-Apple-Silicon.dmg` |
+            | **macOS** (Intel) | `Simple-Subtitle-Edit-${{ inputs.version }}-macOS-Intel.dmg` |
+            | **Windows** (most PCs) | `Simple-Subtitle-Edit-${{ inputs.version }}-Windows-x64-Setup.exe` |
+            | **Windows on ARM** | `Simple-Subtitle-Edit-${{ inputs.version }}-Windows-arm64-Setup.exe` |
+            | **Ubuntu / Debian** | `simple-subtitle-edit_${{ inputs.version }}_amd64.deb` (or `_arm64.deb`) |
+            | **Fedora** | `simple-subtitle-edit-*.x86_64.rpm` (or `.aarch64.rpm`) |
+            | **Other Linux** | `Simple-Subtitle-Edit-${{ inputs.version }}-Linux-x64.tar.gz` (needs mpv, ffmpeg, mkvtoolnix) |
+
+            ## First open
+
+            The app is not signed with a paid certificate, so the system asks once:
+
+            - **macOS**: drag the app to Applications, then right-click it › **Open** › **Open**.
+              If there is no Open button: System Settings › Privacy & Security › **Open Anyway**.
+            - **Windows**: "Windows protected your PC" › **More info** › **Run anyway**.
+            - **Linux**: `sudo apt install ./simple-subtitle-edit_*.deb` or `sudo dnf install ./simple-subtitle-edit-*.rpm`
+              (installs mpv, ffmpeg and MKVToolNix too).
+
+            macOS and Windows builds carry the video player, ffmpeg and mkvmerge inside.

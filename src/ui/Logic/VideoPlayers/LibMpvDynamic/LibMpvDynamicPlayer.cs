@@ -460,9 +460,11 @@ public sealed class LibMpvDynamicPlayer : IDisposable, IVideoPlayer
 
     private bool LoadLibraryInternal()
     {
-        foreach (var libName in GetLibraryNames())
+        // Folder first, then file name: the libmpv bundled with the app (Frameworks/libmpv.2.dylib)
+        // wins over a system one found under another name (Homebrew's libmpv.dylib).
+        foreach (var libPath in GetLibraryPaths())
         {
-            foreach (var libPath in GetLibraryPaths())
+            foreach (var libName in GetLibraryNames())
             {
                 var fullPath = Path.Combine(libPath, libName);
                 if (File.Exists(fullPath))

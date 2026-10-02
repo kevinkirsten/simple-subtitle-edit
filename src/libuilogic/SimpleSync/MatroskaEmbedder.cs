@@ -36,6 +36,8 @@ public static class MatroskaEmbedder
         {
             configured,
             Path.Combine(AppContext.BaseDirectory, exe),
+            // Bundled by the installers: mkvmerge + its libs in a folder of their own.
+            Path.Combine(AppContext.BaseDirectory, "mkvtoolnix", exe),
             "/opt/homebrew/bin/mkvmerge",
             "/usr/local/bin/mkvmerge",
             "/usr/bin/mkvmerge",
