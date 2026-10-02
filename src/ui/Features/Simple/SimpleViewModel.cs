@@ -30,6 +30,9 @@ public partial class SimpleViewModel : ObservableObject
     [ObservableProperty] private bool _hasVideo;
     [ObservableProperty] private bool _isDirty;
     [ObservableProperty] private SubtitleSource? _selectedSource;
+    [ObservableProperty] private string _playlistText = string.Empty;
+    [ObservableProperty] private bool _hasPrevious;
+    [ObservableProperty] private bool _hasNext;
 
     public SimpleViewModel(IVideoPlayer? player)
     {
@@ -52,17 +55,66 @@ public partial class SimpleViewModel : ObservableObject
 
     public double ViewSeconds { get; private set; } = 20;
 
+    public VideoPlaylist? Playlist { get; private set; }
+
+    /// <summary>Opens every video in a folder (and its season folders) and shows the first one.</summary>
+    public async Task<bool> OpenFolderAsync(string folder)
+    {
+        var playlist = VideoPlaylist.FromFolder(folder);
+        if (playlist.Current == null)
+        {
+            StatusText = Strings.NoVideosInFolder;
+            return false;
+        }
+
+        Playlist = playlist;
+        await LoadVideoAsync(playlist.Current);
+        return true;
+    }
+
+    public async Task GoNextAsync()
+    {
+        if (Playlist is { HasNext: true })
+        {
+            await LoadVideoAsync(Playlist.MoveNext()!);
+        }
+    }
+
+    public async Task GoPreviousAsync()
+    {
+        if (Playlist is { HasPrevious: true })
+        {
+            await LoadVideoAsync(Playlist.MovePrevious()!);
+        }
+    }
+
+    private void UpdatePlaylistState()
+    {
+        PlaylistText = Playlist?.Describe() ?? string.Empty;
+        HasPrevious = Playlist?.HasPrevious ?? false;
+        HasNext = Playlist?.HasNext ?? false;
+    }
+
     /// <summary>Raised whenever the timeline or minimap need to repaint.</summary>
     public event Action? Redraw;
 
     public bool IsPlaying => _player?.IsPlaying ?? false;
 
+    /// <summary>Opens one video; PREV/NEXT then walk the other videos in its folder.</summary>
     public async Task OpenVideoAsync(string fileName)
     {
         if (!File.Exists(fileName))
         {
             return;
         }
+
+        Playlist = VideoPlaylist.FromVideo(fileName);
+        await LoadVideoAsync(fileName);
+    }
+
+    private async Task LoadVideoAsync(string fileName)
+    {
+        UpdatePlaylistState();
 
         _waveformCancel?.Cancel();
         VideoFileName = fileName;

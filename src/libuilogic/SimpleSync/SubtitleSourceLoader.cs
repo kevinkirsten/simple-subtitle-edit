@@ -11,7 +11,7 @@ public static class SubtitleSourceLoader
     {
         var subtitle = source.Kind switch
         {
-            SubtitleSourceKind.File => Subtitle.Parse(source.Path),
+            SubtitleSourceKind.File or SubtitleSourceKind.Online => Subtitle.Parse(source.Path),
             SubtitleSourceKind.Matroska => LoadMatroska(source),
             SubtitleSourceKind.Mp4 => LoadMp4(source),
             _ => null,

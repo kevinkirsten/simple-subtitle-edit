@@ -68,17 +68,28 @@ public class SimpleWindow : Window
 
         _vm = new SimpleViewModel(player);
         DataContext = _vm;
+        AskLeave = () => UnsavedDialog.AskAsync(this);
 
         // --- top bar -------------------------------------------------------------------
+        var openFolder = BrutalTheme.Button(strings.OpenFolder, "OpenFolder");
+        openFolder.Click += async (_, _) => await PickFolderAsync();
         var openVideo = BrutalTheme.Button(strings.OpenVideo, "OpenVideo");
         openVideo.Click += async (_, _) => await PickVideoAsync();
+        var previous = BrutalTheme.Button(strings.Previous, "PreviousVideo");
+        previous.Click += async (_, _) => await GoAsync(next: false);
+        previous.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.HasPrevious)));
+        var next = BrutalTheme.Button(strings.Next, "NextVideo");
+        next.Click += async (_, _) => await GoAsync(next: true);
+        next.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.HasNext)));
         var fileLabel = BrutalTheme.Label(string.Empty);
-        fileLabel.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.VideoFileName)) { Converter = FileNameOnly.Instance });
+        fileLabel.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.PlaylistText)) { TargetNullValue = strings.AppTitle });
         fileLabel.TextTrimming = TextTrimming.CharacterEllipsis;
-        fileLabel.Margin = new Thickness(12, 0);
+        fileLabel.TextAlignment = TextAlignment.Center;
+        fileLabel.Margin = new Thickness(8, 0);
+        Avalonia.Automation.AutomationProperties.SetAutomationId(fileLabel, "PlaylistText");
         var advanced = BrutalTheme.Button(strings.AdvancedMode, "AdvancedMode");
         advanced.Click += (_, _) => OpenAdvancedMode();
-        var topBar = Row(new Control[] { openVideo, fileLabel, advanced }, stretchIndex: 1);
+        var topBar = Row(new Control[] { openFolder, openVideo, previous, fileLabel, next, advanced }, stretchIndex: 3);
 
         // --- video ---------------------------------------------------------------------
         var caption = new TextBlock
@@ -207,6 +218,7 @@ public class SimpleWindow : Window
             Background = BrutalTheme.Paper,
             MinHeight = 38,
         };
+        combo.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<SubtitleSource>((source, _) => SourceItem(source));
         combo.Bind(ItemsControl.ItemsSourceProperty, new Binding(nameof(SimpleViewModel.Sources)));
         combo.Bind(SelectingItemsControl.SelectedItemProperty, new Binding(nameof(SimpleViewModel.SelectedSource)) { Mode = BindingMode.TwoWay });
         Avalonia.Automation.AutomationProperties.SetAutomationId(combo, "SubtitlePicker");
@@ -296,6 +308,92 @@ public class SimpleWindow : Window
         _videoArea.Children.Insert(0, new Image { Source = image, Stretch = Stretch.Uniform });
     }
 
+    /// <summary>Asks before leaving a subtitle with an unsaved offset. Replaceable in tests.</summary>
+    public System.Func<Task<LeaveChoice>> AskLeave { get; set; }
+
+    private async Task<bool> ConfirmLeaveAsync()
+    {
+        if (!_vm.IsDirty)
+        {
+            return true;
+        }
+
+        switch (await AskLeave())
+        {
+            case LeaveChoice.Save:
+                SaveNow();
+                return true;
+            case LeaveChoice.Discard:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private async Task GoAsync(bool next)
+    {
+        if (!await ConfirmLeaveAsync())
+        {
+            return;
+        }
+
+        if (next)
+        {
+            await _vm.GoNextAsync();
+        }
+        else
+        {
+            await _vm.GoPreviousAsync();
+        }
+    }
+
+    private static Control SourceItem(SubtitleSource? source)
+    {
+        if (source == null)
+        {
+            return new TextBlock();
+        }
+
+        var strings = SimpleStrings.Current;
+        var tag = source.Kind switch
+        {
+            SubtitleSourceKind.File => strings.TagLocal,
+            SubtitleSourceKind.Online => strings.TagOnline,
+            _ => strings.TagEmbedded,
+        };
+
+        var badge = new Border
+        {
+            Background = source.Kind == SubtitleSourceKind.File ? BrutalTheme.Marker : BrutalTheme.PaperDim,
+            BorderBrush = BrutalTheme.Ink,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(5, 1),
+            Margin = new Thickness(0, 0, 8, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = BrutalTheme.Label(tag, 10),
+        };
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Children = { badge, new TextBlock { Text = source.DisplayName, FontFamily = BrutalTheme.Mono, VerticalAlignment = VerticalAlignment.Center } },
+        };
+    }
+
+    private async Task PickFolderAsync()
+    {
+        if (!await ConfirmLeaveAsync())
+        {
+            return;
+        }
+
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { AllowMultiple = false });
+        var path = folders.FirstOrDefault()?.TryGetLocalPath();
+        if (path != null)
+        {
+            await _vm.OpenFolderAsync(path);
+        }
+    }
+
     private Button NudgeButton(string text, double seconds, string id)
     {
         var button = BrutalTheme.Button(text, id);
@@ -337,6 +435,11 @@ public class SimpleWindow : Window
 
     private async Task PickVideoAsync()
     {
+        if (!await ConfirmLeaveAsync())
+        {
+            return;
+        }
+
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
@@ -418,7 +521,7 @@ public class SimpleWindow : Window
     {
         try
         {
-            var paths = e.DataTransfer.TryGetFiles()?.Select(f => f.TryGetLocalPath()).OfType<string>().ToList() ?? [];
+            var paths = e.DataTransfer.TryGetFiles()?.Select(f => f.TryGetLocalPath()?.TrimEnd('/', '\\')).OfType<string>().ToList() ?? [];
             await HandleDroppedFilesAsync(paths);
         }
         catch (Exception ex)
@@ -430,6 +533,17 @@ public class SimpleWindow : Window
     /// <summary>A video opens; a subtitle file is added to the picker. Both can be dropped together.</summary>
     public async Task HandleDroppedFilesAsync(System.Collections.Generic.IReadOnlyList<string> paths)
     {
+        var folder = paths.FirstOrDefault(Directory.Exists);
+        if (folder != null)
+        {
+            if (await ConfirmLeaveAsync())
+            {
+                await _vm.OpenFolderAsync(folder);
+            }
+
+            return;
+        }
+
         var video = paths.FirstOrDefault(p => !IsSubtitleFile(p));
         // macOS delivers a command-line file both as an argument and as an "open file" event.
         if (video != null && !string.Equals(video, _vm.VideoFileName, StringComparison.Ordinal))
@@ -456,6 +570,12 @@ public class SimpleWindow : Window
         var command = e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
         switch (e.Key)
         {
+            case Key.PageDown:
+                _ = GoAsync(next: true);
+                break;
+            case Key.PageUp:
+                _ = GoAsync(next: false);
+                break;
             case Key.Space:
                 _vm.PlayOrPause();
                 break;

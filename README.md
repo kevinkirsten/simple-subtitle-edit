@@ -14,17 +14,18 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
 
 | Part | What it does |
 |---|---|
+| **OPEN FOLDER** · **◀ PREV** · **NEXT ▶** | Open a whole series folder (season subfolders included) and go episode by episode. Each episode brings its subtitle along. If you changed the offset and did not save, it asks before moving on. |
 | **Video** | Plays any video ffmpeg/mpv can open: mkv, mp4, avi, HEVC 10-bit, AV1… The current subtitle line is shown under the picture. |
 | **WHOLE VIDEO** | The entire video in one bar. Green is the audio, **yellow marks where there is subtitle text**. Gaps in yellow = parts with no subtitle. The blue box is the part shown below; click or drag to jump. |
 | **AUDIO** | Zoomed waveform. Speech shows up as green blocks. |
 | **TEXT** | Each subtitle line as a yellow block, under the audio it belongs to. When the blocks do not line up with the speech, the subtitle is out of sync. |
 | **OFFSET** | Moves the whole subtitle earlier (−) or later (+). |
-| **SUBTITLE** | Every subtitle found next to the video or inside it (mkv/mp4 text tracks). Pick another one to compare. |
+| **SUBTITLE** | Every subtitle for this video, tagged by where it came from: **LOCAL** (a file next to the video, listed first) or **IN VIDEO** (a text track inside the mkv/mp4). Pick another one to compare. |
 | **SAVE** | Writes `video-name.srt` next to the video. If that file already exists, the old one is kept as `video-name.srt.bak`. |
 
 ## How to fix a subtitle in 4 steps
 
-1. **Drag the video into the window** (or click **OPEN VIDEO**). The subtitles next to it are
+1. **Drag the video (or the whole series folder) into the window**, or click **OPEN VIDEO** / **OPEN FOLDER**. The subtitles next to it are
    loaded; the one named like the video comes first.
 2. **Find a line of speech** in the AUDIO lane and look at the yellow block under it.
    - Block starts **after** the speech → the subtitle is late → press **−0.1** / **−1s**.
@@ -42,6 +43,7 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
 
 | Key | Action |
 |---|---|
+| `PgUp` `PgDn` | Previous / next video |
 | `Space` | Play / pause |
 | `←` `→` | Back / forward 1 second |
 | `,` `.` | Offset −0.1 s / +0.1 s |
@@ -119,8 +121,10 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
 
 ### Como usar
 
-1. **Arraste o vídeo para a janela** (ou clique em **ABRIR VÍDEO**). As legendas da pasta e
-   as que estão dentro do vídeo aparecem em **LEGENDA**; a com o nome do vídeo vem primeiro.
+1. **Arraste o vídeo, ou a pasta inteira da série, para a janela** (ou clique em **ABRIR
+   VÍDEO** / **ABRIR PASTA**). Com uma pasta, **◀ ANTERIOR** e **PRÓXIMO ▶** passam de episódio
+   em episódio, e a legenda vem junto. Em **LEGENDA**, cada uma aparece com a origem: **LOCAL**
+   (arquivo na pasta, vem primeiro) ou **NO VÍDEO** (faixa dentro do mkv/mp4).
 2. **Ache uma fala** na faixa ÁUDIO (os blocos verdes) e olhe o bloco amarelo embaixo dela.
    - Bloco começa **depois** da fala → legenda atrasada → **−0.1** / **−1s**.
    - Bloco começa **antes** da fala → legenda adiantada → **+0.1** / **+1s**.
@@ -132,6 +136,7 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
 
 | Tecla | Ação |
 |---|---|
+| `PgUp` `PgDn` | Vídeo anterior / próximo |
 | `Espaço` | Toca / pausa |
 | `←` `→` | Volta / avança 1 s |
 | `,` `.` | Offset −0,1 s / +0,1 s |

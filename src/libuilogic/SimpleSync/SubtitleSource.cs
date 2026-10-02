@@ -5,6 +5,7 @@ public enum SubtitleSourceKind
     File,
     Matroska,
     Mp4,
+    Online,
 }
 
 /// <summary>
