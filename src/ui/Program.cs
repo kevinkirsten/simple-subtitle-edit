@@ -273,11 +273,18 @@ namespace Nikse.SubtitleEdit
                         lifetime.MainWindow.Closed += (_, _) => Environment.Exit(0);
                     }
                 }
-                else
+                else if (HasAdvancedArg(args))
                 {
                     // Window creation (content, scale, macOS menu bar, close-to-exit hook) lives
                     // in MainWindowFactory, shared with File > New window's extra editor windows.
                     SetupMainWindow(lifetime);
+                }
+                else
+                {
+                    // Simple Subtitle Edit: the simple sync window is the default; the full
+                    // editor opens from its ADVANCED MODE button or with --advanced.
+                    StartupFileDecisionDone = true;
+                    SetupSimpleWindow(lifetime, args);
                 }
 
 #if DEBUG
@@ -499,6 +506,13 @@ namespace Nikse.SubtitleEdit
                                 // never touches existing windows.
                                 Dispatcher.UIThread.Post(async () =>
                                 {
+                                    // Simple mode: files opened from Finder go to the simple window.
+                                    if (SimpleWindowInstance is { IsVisible: true } simple)
+                                    {
+                                        await simple.HandleDroppedFilesAsync([filePath]);
+                                        return;
+                                    }
+
                                     await Nikse.SubtitleEdit.Features.Main.Layout.MainWindowFactory.OpenNewWindowWithFile(filePath);
                                 });
                             }
@@ -565,6 +579,44 @@ namespace Nikse.SubtitleEdit
                 PendingVideoToOpen = video;
                 FileOpenedViaActivation = true;
             }
+        }
+
+        /// <summary>The simple sync window when the app started in simple mode (the default).</summary>
+        public static Nikse.SubtitleEdit.Features.Simple.SimpleWindow? SimpleWindowInstance { get; private set; }
+
+        private static bool HasAdvancedArg(string[] args)
+        {
+            return args.Any(a => a.Equals("--advanced", StringComparison.OrdinalIgnoreCase)
+                              || a.Equals("/advanced", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static void SetupSimpleWindow(ClassicDesktopStyleApplicationLifetime lifetime, string[] args)
+        {
+            var window = new Nikse.SubtitleEdit.Features.Simple.SimpleWindow
+            {
+                Icon = UiUtil.GetSeIcon(),
+            };
+
+            UiTheme.ApplyScaleToWindow(window);
+            lifetime.MainWindow = window;
+            SimpleWindowInstance = window;
+
+            // A video passed on the command line opens right away; subtitle files are added to the picker.
+            var files = args.Where(System.IO.File.Exists).ToList();
+            if (files.Count > 0)
+            {
+                window.Opened += async (_, _) => await window.HandleDroppedFilesAsync(files);
+            }
+
+            // Same guarantee as the editor windows (#12172): no invisible process after the last
+            // window closes. Editor windows opened from ADVANCED MODE keep the app alive.
+            window.Closed += (_, _) =>
+            {
+                if (!lifetime.Windows.Any(w => w != window && w.IsVisible))
+                {
+                    Environment.Exit(0);
+                }
+            };
         }
 
         private static bool HasBatchConvertUiArg(string[] args)

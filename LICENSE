@@ -19,3 +19,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Simple Subtitle Edit is a fork of Subtitle Edit (https://github.com/SubtitleEdit/subtitleedit).
+The notice above covers the original code; changes in this fork are released under the same
+MIT License, Copyright (c) 2026 Kevin Kirsten Lucas.
