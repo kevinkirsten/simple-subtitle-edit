@@ -21,7 +21,8 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
 | **TEXT** | Each subtitle line as a yellow block, under the audio it belongs to. When the blocks do not line up with the speech, the subtitle is out of sync. |
 | **OFFSET** | Moves the whole subtitle earlier (−) or later (+). |
 | **SUBTITLE** | Every subtitle for this video, tagged by where it came from: **LOCAL** (a file next to the video, listed first) or **IN VIDEO** (a text track inside the mkv/mp4). Pick another one to compare. |
-| **SAVE** | Writes `video-name.srt` next to the video. If that file already exists, the old one is kept as `video-name.srt.bak`. |
+| **FIND ONLINE** · **⚙** | Searches [OpenSubtitles.com](https://www.opensubtitles.com) for this video (by file hash and by name, season and episode) and adds the results to SUBTITLE tagged **ONLINE**, exact-file matches first. A subtitle is only downloaded when you pick it, and each one is downloaded once. ⚙ holds your API key and login (stored on your computer only). |
+| **SAVE** | Writes `video-name.srt` next to the video. Lines that would start after the video ends are dropped. If that file already exists, the old one is kept as `video-name.srt.bak`. |
 
 ## How to fix a subtitle in 4 steps
 
@@ -31,6 +32,7 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
    - Block starts **after** the speech → the subtitle is late → press **−0.1** / **−1s**.
    - Block starts **before** the speech → the subtitle is early → press **+0.1** / **+1s**.
    - Or just **drag the yellow lane** sideways until the blocks sit under the speech.
+   - No subtitle, or a bad one? **FIND ONLINE**, pick an ONLINE entry, check it.
 3. **Check another part of the video**: click further along the WHOLE VIDEO bar. If the
    blocks match at the start but drift apart near the end, this subtitle was made for a
    different cut or frame rate. Pick another one in **SUBTITLE**, or use
@@ -132,7 +134,12 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
 3. **Confira outro trecho**: clique mais adiante na barra VÍDEO INTEIRO. Os trechos sem
    amarelo são partes sem legenda. Se no começo encaixa e no fim desencaixa, a legenda é de
    outra versão do vídeo: escolha outra em **LEGENDA**.
-4. **SALVAR**. Se já existir um `.srt` com o nome do vídeo, o antigo vira `.srt.bak`.
+   Sem legenda boa? **BUSCAR ONLINE** procura no OpenSubtitles.com (pelo arquivo exato e pelo
+   nome/temporada/episódio) e põe os resultados em LEGENDA com a etiqueta **ONLINE**. Só baixa
+   quando você escolhe uma, e cada uma só uma vez. A chave de API e o login ficam em **⚙**,
+   guardados só no seu computador.
+4. **SALVAR**. Se já existir um `.srt` com o nome do vídeo, o antigo vira `.srt.bak`. Falas que
+   passariam do fim do vídeo são cortadas.
 
 | Tecla | Ação |
 |---|---|

@@ -187,3 +187,31 @@ public class SyncSessionTests
         Assert.Equal(expected, SyncSession.FormatTime(seconds));
     }
 }
+
+public class SyncSessionTrimTests
+{
+    [Fact]
+    public void BuildShifted_WithDuration_DropsLinesAfterTheEnd_AndCutsTheLastOne()
+    {
+        var session = new SyncSession(new Subtitle(
+        [
+            new Paragraph("Dentro", 1000, 2000),
+            new Paragraph("Cortada", 9000, 12000),
+            new Paragraph("Depois do fim", 15000, 16000),
+        ]));
+
+        var shifted = session.BuildShifted(videoDurationSeconds: 10);
+
+        Assert.Equal(["Dentro", "Cortada"], shifted.Paragraphs.Select(p => p.Text));
+        Assert.Equal(10000, shifted.Paragraphs[1].EndTime.TotalMilliseconds);
+        Assert.Equal(2, shifted.Paragraphs[1].Number);
+    }
+
+    [Fact]
+    public void BuildShifted_WithoutDuration_KeepsEverything()
+    {
+        var session = new SyncSession(new Subtitle([new Paragraph("Longe", 99000, 100000)]));
+
+        Assert.Single(session.BuildShifted().Paragraphs);
+    }
+}

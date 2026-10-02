@@ -63,6 +63,10 @@ public static class BrutalTheme
                     new Setter(Border.BorderBrushProperty, Ink),
                 },
             },
+            new Style(x => x.OfType<ComboBox>().Class(ButtonClass).Class(":pointerover").Template().OfType<ContentControl>().Name("ContentPresenter"))
+            {
+                Setters = { new Setter(ContentControl.ForegroundProperty, Ink) },
+            },
             new Style(x => x.OfType<ComboBoxItem>().Class(":pointerover").Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"))
             {
                 Setters = { new Setter(ContentPresenter.BackgroundProperty, Marker), new Setter(ContentPresenter.ForegroundProperty, Ink) },

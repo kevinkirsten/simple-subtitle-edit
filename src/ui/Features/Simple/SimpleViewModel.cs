@@ -21,6 +21,9 @@ public partial class SimpleViewModel : ObservableObject
     private readonly IVideoPlayer? _player;
     private CancellationTokenSource? _waveformCancel;
     private bool _loadingSource;
+    private OpenSubtitlesClient? _onlineClient;
+    private OpenSubtitlesSettings _onlineSettings = new();
+    private static readonly System.Net.Http.HttpClient SharedHttp = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     [ObservableProperty] private string _videoFileName = string.Empty;
     [ObservableProperty] private string _statusText = string.Empty;
@@ -56,6 +59,86 @@ public partial class SimpleViewModel : ObservableObject
     public double ViewSeconds { get; private set; } = 20;
 
     public VideoPlaylist? Playlist { get; private set; }
+
+    /// <summary>Builds the OpenSubtitles client; tests swap in one backed by a fake server.</summary>
+    public Func<OpenSubtitlesSettings, OpenSubtitlesClient> OnlineClientFactory { get; set; } =
+        settings => new OpenSubtitlesClient(SharedHttp, settings, SimpleSettingsStore.OnlineCacheFolder);
+
+    public OpenSubtitlesSettings OnlineSettings
+    {
+        get => _onlineSettings;
+        set
+        {
+            _onlineSettings = value;
+            _onlineClient = null; // new key/login: new session
+        }
+    }
+
+    private OpenSubtitlesClient OnlineClient => _onlineClient ??= OnlineClientFactory(_onlineSettings);
+
+    /// <summary>
+    /// Searches OpenSubtitles for the open video and adds the results to the picker as ONLINE.
+    /// Nothing is downloaded until one of them is picked.
+    /// </summary>
+    public async Task<int> FindOnlineAsync()
+    {
+        if (string.IsNullOrEmpty(VideoFileName))
+        {
+            return 0;
+        }
+
+        var video = VideoFileName;
+        StatusText = Strings.OnlineSearching;
+        try
+        {
+            var query = await Task.Run(() => VideoQuery.FromFile(video));
+            var results = await OnlineClient.SearchAsync(query, CancellationToken.None);
+            if (video != VideoFileName)
+            {
+                return 0; // switched episode while searching
+            }
+
+            foreach (var old in Sources.Where(s => s.Kind == SubtitleSourceKind.Online).ToList())
+            {
+                Sources.Remove(old);
+            }
+
+            foreach (var r in results)
+            {
+                Sources.Add(new SubtitleSource(SubtitleSourceKind.Online, r.Describe(), OnlineClient.CachePathFor(r.FileId), r.FileId, r.Language));
+            }
+
+            StatusText = results.Count == 0 ? Strings.OnlineNone : string.Format(Strings.OnlineFound, results.Count);
+            return results.Count;
+        }
+        catch (Exception ex)
+        {
+            StatusText = ex.Message;
+            return 0;
+        }
+    }
+
+    private async Task DownloadAndLoadAsync(SubtitleSource source)
+    {
+        StatusText = string.Format(Strings.OnlineDownloading, source.DisplayName);
+        try
+        {
+            var result = await OnlineClient.DownloadAsync(source.TrackNumber, CancellationToken.None);
+            if (!ReferenceEquals(SelectedSource, source))
+            {
+                return; // picked something else meanwhile
+            }
+
+            if (LoadSource(source) && result.RemainingDownloads != null)
+            {
+                StatusText = string.Format(Strings.OnlineDownloaded, result.RemainingDownloads);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText = ex.Message;
+        }
+    }
 
     /// <summary>Opens every video in a folder (and its season folders) and shows the first one.</summary>
     public async Task<bool> OpenFolderAsync(string folder)
@@ -195,6 +278,12 @@ public partial class SimpleViewModel : ObservableObject
             return;
         }
 
+        if (value.Kind == SubtitleSourceKind.Online && !File.Exists(value.Path))
+        {
+            _ = DownloadAndLoadAsync(value);
+            return;
+        }
+
         LoadSource(value);
     }
 
@@ -260,7 +349,7 @@ public partial class SimpleViewModel : ObservableObject
             return null;
         }
 
-        var result = Session.Save(VideoFileName);
+        var result = Session.Save(VideoFileName, Duration);
         StatusText = result.BackupFileName == null
             ? string.Format(Strings.Saved, Path.GetFileName(result.OutputFileName))
             : string.Format(Strings.SavedWithBackup, Path.GetFileName(result.OutputFileName), Path.GetFileName(result.BackupFileName));

@@ -70,6 +70,11 @@ public class SimpleWindow : Window
         _vm = new SimpleViewModel(player);
         DataContext = _vm;
         AskLeave = () => UnsavedDialog.AskAsync(this);
+        AskOnlineSettings = current => OnlineSettingsDialog.AskAsync(this, current);
+        if (createPlayer)
+        {
+            _vm.OnlineSettings = SimpleSettingsStore.Load();
+        }
 
         // --- top bar -------------------------------------------------------------------
         var openFolder = BrutalTheme.Button(strings.OpenFolder, "OpenFolder");
@@ -218,6 +223,7 @@ public class SimpleWindow : Window
             BorderThickness = BrutalTheme.Line,
             CornerRadius = new CornerRadius(0),
             Background = BrutalTheme.Paper,
+            Foreground = BrutalTheme.Ink,
             MinHeight = 38,
             Cursor = BrutalTheme.Hand,
         };
@@ -226,13 +232,19 @@ public class SimpleWindow : Window
         combo.Bind(ItemsControl.ItemsSourceProperty, new Binding(nameof(SimpleViewModel.Sources)));
         combo.Bind(SelectingItemsControl.SelectedItemProperty, new Binding(nameof(SimpleViewModel.SelectedSource)) { Mode = BindingMode.TwoWay });
         Avalonia.Automation.AutomationProperties.SetAutomationId(combo, "SubtitlePicker");
+        var findOnline = BrutalTheme.Button(strings.FindOnline, "FindOnline");
+        findOnline.Click += async (_, _) => await FindOnlineAsync();
+        findOnline.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.HasVideo)));
+        var onlineSettings = BrutalTheme.Button("⚙", "OnlineSettings");
+        ToolTip.SetTip(onlineSettings, strings.OnlineSettingsTitle);
+        onlineSettings.Click += async (_, _) => await EditOnlineSettingsAsync();
         var otherFile = BrutalTheme.Button(strings.OpenSubtitle, "OpenSubtitle");
         otherFile.Click += async (_, _) => await PickSubtitleAsync();
         var save = BrutalTheme.Button(strings.Save, "Save");
         save.Background = BrutalTheme.Marker;
         save.Classes.Add(BrutalTheme.PrimaryClass);
         save.Click += (_, _) => SaveNow();
-        var subtitleRow = Row(new Control[] { subtitleLabel, combo, otherFile, save }, stretchIndex: 1);
+        var subtitleRow = Row(new Control[] { subtitleLabel, combo, findOnline, onlineSettings, otherFile, save }, stretchIndex: 1);
 
         // --- status --------------------------------------------------------------------
         var status = BrutalTheme.Label(string.Empty, 12);
@@ -316,6 +328,43 @@ public class SimpleWindow : Window
     /// <summary>Asks before leaving a subtitle with an unsaved offset. Replaceable in tests.</summary>
     public System.Func<Task<LeaveChoice>> AskLeave { get; set; }
 
+    /// <summary>Shows the OpenSubtitles login dialog. Replaceable in tests.</summary>
+    public System.Func<OpenSubtitlesSettings, Task<OpenSubtitlesSettings?>> AskOnlineSettings { get; set; }
+
+    private async Task<bool> EditOnlineSettingsAsync()
+    {
+        var updated = await AskOnlineSettings(_vm.OnlineSettings);
+        if (updated == null)
+        {
+            return false;
+        }
+
+        _vm.OnlineSettings = updated;
+        try
+        {
+            SimpleSettingsStore.Save(updated);
+        }
+        catch (Exception ex)
+        {
+            _vm.StatusText = ex.Message;
+        }
+
+        return true;
+    }
+
+    public async Task FindOnlineAsync()
+    {
+        if (!_vm.OnlineSettings.CanSearch && !await EditOnlineSettingsAsync())
+        {
+            return;
+        }
+
+        if (_vm.OnlineSettings.CanSearch)
+        {
+            await _vm.FindOnlineAsync();
+        }
+    }
+
     private async Task<bool> ConfirmLeaveAsync()
     {
         if (!_vm.IsDirty)
@@ -380,7 +429,7 @@ public class SimpleWindow : Window
         return new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Children = { badge, new TextBlock { Text = source.DisplayName, FontFamily = BrutalTheme.Mono, VerticalAlignment = VerticalAlignment.Center } },
+            Children = { badge, new TextBlock { Text = source.DisplayName, FontFamily = BrutalTheme.Mono, Foreground = BrutalTheme.Ink, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis } },
         };
     }
 

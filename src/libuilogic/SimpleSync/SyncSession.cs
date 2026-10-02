@@ -117,8 +117,11 @@ public sealed class SyncSession
         return result;
     }
 
-    /// <summary>A copy of the subtitle with the offset applied, ready to save.</summary>
-    public Subtitle BuildShifted()
+    /// <summary>
+    /// A copy of the subtitle with the offset applied, ready to save. With a video duration,
+    /// lines that would start after the video ends are dropped and the last one is cut at the end.
+    /// </summary>
+    public Subtitle BuildShifted(double videoDurationSeconds = 0)
     {
         var copy = new Subtitle(Original, generateNewId: false);
         if (HasChanges)
@@ -140,6 +143,18 @@ public sealed class SyncSession
             }
         }
 
+        if (videoDurationSeconds > 0)
+        {
+            var endMs = videoDurationSeconds * 1000;
+            copy.Paragraphs.RemoveAll(p => p.StartTime.TotalMilliseconds >= endMs);
+            foreach (var p in copy.Paragraphs.Where(p => p.EndTime.TotalMilliseconds > endMs))
+            {
+                p.EndTime.TotalMilliseconds = endMs;
+            }
+
+            copy.Renumber();
+        }
+
         return copy;
     }
 
@@ -150,7 +165,7 @@ public sealed class SyncSession
     /// Writes the shifted subtitle as SRT next to the video. An existing file with that name is
     /// first copied to "*.srt.bak", so a wrong save can always be undone.
     /// </summary>
-    public SaveResult Save(string videoFileName)
+    public SaveResult Save(string videoFileName, double videoDurationSeconds = 0)
     {
         var output = OutputPathFor(videoFileName);
         string? backup = null;
@@ -160,7 +175,7 @@ public sealed class SyncSession
             File.Copy(output, backup, overwrite: true);
         }
 
-        var text = new SubRip().ToText(BuildShifted(), Path.GetFileNameWithoutExtension(videoFileName));
+        var text = new SubRip().ToText(BuildShifted(videoDurationSeconds), Path.GetFileNameWithoutExtension(videoFileName));
         File.WriteAllText(output, text, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         return new SaveResult(output, backup);
     }

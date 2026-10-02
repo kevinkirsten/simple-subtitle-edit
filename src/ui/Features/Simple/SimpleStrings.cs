@@ -55,6 +55,19 @@ public sealed class SimpleStrings
     public required string SaveAndGo { get; init; }
     public required string DiscardAndGo { get; init; }
     public required string Cancel { get; init; }
+    public required string FindOnline { get; init; }
+    public required string OnlineSettingsTitle { get; init; }
+    public required string OnlineApiKey { get; init; }
+    public required string OnlineAppName { get; init; }
+    public required string OnlineUsername { get; init; }
+    public required string OnlinePassword { get; init; }
+    public required string OnlineLanguage { get; init; }
+    public required string OnlineHelp { get; init; }
+    public required string OnlineSearching { get; init; }
+    public required string OnlineFound { get; init; }
+    public required string OnlineNone { get; init; }
+    public required string OnlineDownloading { get; init; }
+    public required string OnlineDownloaded { get; init; }
 
     public static readonly SimpleStrings English = new()
     {
@@ -92,6 +105,19 @@ public sealed class SimpleStrings
         SaveAndGo = "SAVE AND GO",
         DiscardAndGo = "DISCARD",
         Cancel = "CANCEL",
+        FindOnline = "FIND ONLINE",
+        OnlineSettingsTitle = "OpenSubtitles.com",
+        OnlineApiKey = "API KEY",
+        OnlineAppName = "APP NAME",
+        OnlineUsername = "USERNAME",
+        OnlinePassword = "PASSWORD",
+        OnlineLanguage = "LANGUAGE",
+        OnlineHelp = "Create a free account at opensubtitles.com, then an API key in Profile › API consumers. APP NAME is the consumer name you chose there. Searching needs only the key; downloading needs the login and counts against your daily limit (each subtitle is downloaded once, then cached). LANGUAGE: pt-br, en, es…",
+        OnlineSearching = "Searching OpenSubtitles…",
+        OnlineFound = "{0} subtitles online. Pick one in SUBTITLE to download it.",
+        OnlineNone = "Nothing found online for this video.",
+        OnlineDownloading = "Downloading {0}…",
+        OnlineDownloaded = "Downloaded. {0} downloads left today.",
     };
 
     public static readonly SimpleStrings Portuguese = new()
@@ -130,5 +156,18 @@ public sealed class SimpleStrings
         SaveAndGo = "SALVAR E IR",
         DiscardAndGo = "DESCARTAR",
         Cancel = "CANCELAR",
+        FindOnline = "BUSCAR ONLINE",
+        OnlineSettingsTitle = "OpenSubtitles.com",
+        OnlineApiKey = "CHAVE DE API",
+        OnlineAppName = "NOME DO APP",
+        OnlineUsername = "USUÁRIO",
+        OnlinePassword = "SENHA",
+        OnlineLanguage = "IDIOMA",
+        OnlineHelp = "Crie uma conta grátis em opensubtitles.com e uma chave em Profile › API consumers. NOME DO APP é o nome que você deu para essa chave. Buscar só precisa da chave; baixar precisa do login e gasta do seu limite diário (cada legenda é baixada uma vez e fica guardada). IDIOMA: pt-br, en, es…",
+        OnlineSearching = "Buscando no OpenSubtitles…",
+        OnlineFound = "{0} legendas online. Escolha uma em LEGENDA para baixar.",
+        OnlineNone = "Nada encontrado online para este vídeo.",
+        OnlineDownloading = "Baixando {0}…",
+        OnlineDownloaded = "Baixada. Restam {0} downloads hoje.",
     };
 }
