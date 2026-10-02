@@ -37,6 +37,26 @@ public static class SubtitleLanguages
                ?? new SubtitleLanguage(ietf, MatroskaEmbedder.TrackNameFor(ietf));
     }
 
+    // OpenSubtitles.com codes that are not simply the lower-cased IETF tag.
+    private static readonly Dictionary<string, string> IetfToOpenSubtitles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["es-419"] = "ea",
+        ["zh-Hans"] = "zh-cn",
+        ["zh-Hant"] = "zh-tw",
+        ["nb"] = "no",
+    };
+
+    /// <summary>"pt-BR" → "pt-br"; "es-419" → "ea" (OpenSubtitles' code for Latin American Spanish).</summary>
+    public static string ToOpenSubtitles(string ietf) =>
+        IetfToOpenSubtitles.TryGetValue(ietf, out var code) ? code : ietf.ToLowerInvariant();
+
+    /// <summary>The list entry for an OpenSubtitles code ("pt-br", "ea", "zh-cn").</summary>
+    public static SubtitleLanguage FromOpenSubtitles(string code)
+    {
+        var ietf = IetfToOpenSubtitles.FirstOrDefault(kv => kv.Value.Equals(code, StringComparison.OrdinalIgnoreCase)).Key;
+        return For(ietf ?? (string.IsNullOrWhiteSpace(code) ? "pt-BR" : code));
+    }
+
     /// <summary>"pt-BR" → "por"; "de" → "deu".</summary>
     public static string ThreeLetter(string ietf)
     {

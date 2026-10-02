@@ -202,6 +202,27 @@ public class SimpleWindowStyleTests
     }
 
     [AvaloniaFact]
+    public void OnlineSettings_LanguageIsADropDown_AndSavesTheOpenSubtitlesCode()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var dialog = new OnlineSettingsDialog(new Nikse.SubtitleEdit.UiLogic.SimpleSync.OpenSubtitlesSettings { ApiKey = "k", Language = "pt-br" });
+        dialog.Show();
+        Pump();
+
+        var picker = dialog.GetVisualDescendants().OfType<ComboBox>().Single(c => Avalonia.Automation.AutomationProperties.GetAutomationId(c) == "OnlineLanguage");
+        Assert.DoesNotContain(dialog.GetVisualDescendants().OfType<TextBox>(), t => Avalonia.Automation.AutomationProperties.GetAutomationId(t) == "OnlineLanguage");
+        Assert.Equal("pt-BR", ((Nikse.SubtitleEdit.UiLogic.SimpleSync.SubtitleLanguage)picker.SelectedItem!).Ietf);
+
+        picker.SelectedItem = Nikse.SubtitleEdit.UiLogic.SimpleSync.SubtitleLanguages.All.First(l => l.Ietf == "es-419");
+        var save = dialog.GetVisualDescendants().OfType<Button>().Single(b => Avalonia.Automation.AutomationProperties.GetAutomationId(b) == "OnlineSave");
+        save.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Pump();
+
+        var result = typeof(OnlineSettingsDialog).GetField("_result", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(dialog);
+        Assert.Equal("ea", ((Nikse.SubtitleEdit.UiLogic.SimpleSync.OpenSubtitlesSettings)result!).Language);
+    }
+
+    [AvaloniaFact]
     public void UnsavedDialog_ButtonsStayReadableOnHover()
     {
         SimpleStrings.Current = SimpleStrings.English;

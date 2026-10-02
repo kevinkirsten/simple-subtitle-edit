@@ -64,3 +64,25 @@ public class SubtitleLanguagesTests
         Assert.Equal("#14 por (image)", ExistingTracks.Describe(Sopranos.Tracks[3]));
     }
 }
+
+public class OpenSubtitlesLanguageCodeTests
+{
+    [Theory]
+    [InlineData("pt-BR", "pt-br")]
+    [InlineData("en", "en")]
+    [InlineData("es-419", "ea")]
+    [InlineData("zh-Hans", "zh-cn")]
+    [InlineData("zh-Hant", "zh-tw")]
+    [InlineData("nb", "no")]
+    public void RoundTrip(string ietf, string openSubtitles)
+    {
+        Assert.Equal(openSubtitles, SubtitleLanguages.ToOpenSubtitles(ietf));
+        Assert.Equal(ietf, SubtitleLanguages.FromOpenSubtitles(openSubtitles).Ietf);
+    }
+
+    [Fact]
+    public void FromOpenSubtitles_Empty_DefaultsToPtBr()
+    {
+        Assert.Equal("pt-BR", SubtitleLanguages.FromOpenSubtitles("").Ietf);
+    }
+}

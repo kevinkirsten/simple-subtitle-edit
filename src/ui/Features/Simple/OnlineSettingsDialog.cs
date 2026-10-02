@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Nikse.SubtitleEdit.UiLogic.SimpleSync;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Nikse.SubtitleEdit.Features.Simple;
@@ -45,7 +46,28 @@ public class OnlineSettingsDialog : Window
         var appName = Field(current.AppName, "OnlineAppName");
         var username = Field(current.Username, "OnlineUsername");
         var password = Field(current.Password, "OnlinePassword", '•');
-        var language = Field(current.Language, "OnlineLanguage");
+        var languages = SubtitleLanguages.All.ToList();
+        var currentLanguage = SubtitleLanguages.FromOpenSubtitles(current.Language);
+        if (!languages.Contains(currentLanguage))
+        {
+            languages.Insert(0, currentLanguage);
+        }
+
+        var language = new ComboBox
+        {
+            ItemsSource = languages,
+            SelectedItem = currentLanguage,
+            Width = 360,
+            FontFamily = BrutalTheme.Mono,
+            Foreground = BrutalTheme.Ink,
+            Background = BrutalTheme.Paper,
+            BorderBrush = BrutalTheme.Ink,
+            BorderThickness = BrutalTheme.Line,
+            CornerRadius = new CornerRadius(0),
+            Cursor = BrutalTheme.Hand,
+        };
+        language.Classes.Add(BrutalTheme.ButtonClass);
+        Avalonia.Automation.AutomationProperties.SetAutomationId(language, "OnlineLanguage");
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto"), RowSpacing = 8, ColumnSpacing = 12 };
         void AddRow(int row, string label, Control field)
@@ -80,7 +102,7 @@ public class OnlineSettingsDialog : Window
                 AppName = string.IsNullOrWhiteSpace(appName.Text) ? "SimpleSubtitleEdit" : appName.Text.Trim(),
                 Username = username.Text?.Trim() ?? string.Empty,
                 Password = password.Text ?? string.Empty,
-                Language = string.IsNullOrWhiteSpace(language.Text) ? "pt-br" : language.Text.Trim().ToLowerInvariant(),
+                Language = SubtitleLanguages.ToOpenSubtitles(((SubtitleLanguage?)language.SelectedItem ?? currentLanguage).Ietf),
             };
             Close();
         };

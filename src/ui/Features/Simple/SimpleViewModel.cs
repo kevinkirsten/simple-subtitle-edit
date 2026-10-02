@@ -85,8 +85,9 @@ public partial class SimpleViewModel : ObservableObject
     public bool CanSaveInsideVideo => Session != null && MkvmergePath != null && MatroskaEmbedder.CanEmbedInto(VideoFileName);
 
     /// <summary>Suggested language for a track written into the video: the last one used, else the search language.</summary>
-    public string EmbedLanguage => MatroskaEmbedder.ToIetf(
-        string.IsNullOrWhiteSpace(OnlineSettings.SaveLanguage) ? OnlineSettings.Language : OnlineSettings.SaveLanguage);
+    public string EmbedLanguage => string.IsNullOrWhiteSpace(OnlineSettings.SaveLanguage)
+        ? SubtitleLanguages.FromOpenSubtitles(OnlineSettings.Language).Ietf
+        : MatroskaEmbedder.ToIetf(OnlineSettings.SaveLanguage);
 
     /// <summary>The subtitle tracks already in the open mkv, for the save dialog. Null if unreadable.</summary>
     public async Task<MkvInfo?> ReadVideoTracksAsync()
