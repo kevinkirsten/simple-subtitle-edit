@@ -53,6 +53,7 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
 | `+` `−` | Zoom in / out |
 | `Ctrl+S` / `Cmd+S` | Save |
 | Mouse wheel on the timeline | Scroll; with `Ctrl`/`Cmd`, zoom |
+| `Cmd` (macOS) / `Ctrl` + click or drag on the timeline | Move the red playback cursor there |
 
 ## Install
 
@@ -150,6 +151,7 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
 | `<` `>` | Offset −1 s / +1 s |
 | `+` `−` | Zoom |
 | `Ctrl+S` / `Cmd+S` | Salvar |
+| `Cmd` (Mac) / `Ctrl` + clique ou arraste na linha do tempo | Leva o cursor vermelho até ali |
 
 ### Instalar
 

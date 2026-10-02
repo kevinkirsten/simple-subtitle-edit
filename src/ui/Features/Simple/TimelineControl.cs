@@ -12,7 +12,7 @@ namespace Nikse.SubtitleEdit.Features.Simple;
 /// <summary>
 /// Zoomed view of a few seconds: audio waveform on top, subtitle lines as yellow blocks below.
 /// Click = seek. Drag the audio lane = scroll. Drag the text lane = move the whole subtitle (offset).
-/// Wheel = scroll, Ctrl/Cmd + wheel = zoom.
+/// Wheel = scroll, Ctrl/Cmd + wheel = zoom. Ctrl/Cmd + click or drag = move the playback cursor.
 /// </summary>
 public class TimelineControl : Control
 {
@@ -20,7 +20,7 @@ public class TimelineControl : Control
     private const double DragThreshold = 4;
     private const double TimeAxisHeight = 18;
 
-    private enum DragMode { None, Pan, Offset }
+    private enum DragMode { None, Pan, Offset, Scrub }
 
     private DragMode _dragMode;
     private bool _dragStarted;
@@ -198,7 +198,17 @@ public class TimelineControl : Control
         _pressViewStart = ViewStart;
         _pressOffset = Session?.OffsetSeconds ?? 0;
         _dragStarted = false;
-        _dragMode = point.Y >= WaveLaneBottom && Session != null ? DragMode.Offset : DragMode.Pan;
+        if (IsScrubModifier(e.KeyModifiers))
+        {
+            // Cmd (macOS) / Ctrl (Windows, Linux): the red cursor jumps here and follows the mouse.
+            _dragMode = DragMode.Scrub;
+            SeekRequested?.Invoke(Math.Max(0, XToSeconds(point.X)));
+        }
+        else
+        {
+            _dragMode = point.Y >= WaveLaneBottom && Session != null ? DragMode.Offset : DragMode.Pan;
+        }
+
         e.Pointer.Capture(this);
         Focus();
         e.Handled = true;
@@ -209,6 +219,14 @@ public class TimelineControl : Control
         base.OnPointerMoved(e);
         if (_dragMode == DragMode.None)
         {
+            return;
+        }
+
+        if (_dragMode == DragMode.Scrub)
+        {
+            _dragStarted = true;
+            var x = Math.Clamp(e.GetPosition(this).X, 0, Bounds.Width);
+            SeekRequested?.Invoke(Math.Max(0, XToSeconds(x)));
             return;
         }
 
@@ -237,7 +255,7 @@ public class TimelineControl : Control
             return;
         }
 
-        if (!_dragStarted)
+        if (!_dragStarted && _dragMode != DragMode.Scrub)
         {
             SeekRequested?.Invoke(Math.Max(0, XToSeconds(_pressPoint.X)));
         }
@@ -249,6 +267,10 @@ public class TimelineControl : Control
         _dragMode = DragMode.None;
         e.Pointer.Capture(null);
     }
+
+    /// <summary>Cmd on macOS (Ctrl+click there is a right click), Ctrl on Windows and Linux.</summary>
+    public static bool IsScrubModifier(KeyModifiers modifiers) =>
+        OperatingSystem.IsMacOS() ? modifiers.HasFlag(KeyModifiers.Meta) || modifiers.HasFlag(KeyModifiers.Control) : modifiers.HasFlag(KeyModifiers.Control);
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {

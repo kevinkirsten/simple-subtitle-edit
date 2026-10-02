@@ -152,6 +152,31 @@ public sealed class SimpleWindowE2ETests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task CtrlOrCmdDrag_MovesTheRedCursor_NotTheSubtitle()
+    {
+        var (window, player) = await OpenAsync();
+        var timeline = window.Timeline;
+        var y = timeline.Bounds.Height - 15; // on the text lane, where a plain drag would move the subtitle
+        var modifier = OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control;
+        var from = timeline.TranslatePoint(new Point(timeline.SecondsToX(4), y), window)!.Value;
+        var to = timeline.TranslatePoint(new Point(timeline.SecondsToX(11), y), window)!.Value;
+
+        window.MouseDown(from, MouseButton.Left, modifier);
+        Pump();
+        Assert.InRange(player.Position, 3.9, 4.1); // jumps on press
+
+        window.MouseMove(new Point((from.X + to.X) / 2, y), modifier);
+        window.MouseMove(to, modifier);
+        window.MouseUp(to, MouseButton.Left, modifier);
+        Pump();
+
+        Assert.InRange(player.Position, 10.9, 11.1);
+        Assert.Equal(0, window.ViewModel.Session!.OffsetSeconds);
+        Assert.Equal(0, window.ViewModel.ViewStart);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task DraggingTheAudioLane_ScrollsInsteadOfMovingTheSubtitle()
     {
         var (window, _) = await OpenAsync();
