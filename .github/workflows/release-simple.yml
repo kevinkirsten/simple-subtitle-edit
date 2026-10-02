@@ -61,9 +61,7 @@ jobs:
 
           $ff = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
           Invoke-WebRequest "$ff/ffmpeg-master-latest-win64-gpl.zip" -OutFile ffmpeg-x64.zip
-          Invoke-WebRequest "$ff/ffmpeg-master-latest-winarm64-gpl.zip" -OutFile ffmpeg-arm64.zip
           Expand-Archive ffmpeg-x64.zip -DestinationPath deps/ffmpeg-x64
-          Expand-Archive ffmpeg-arm64.zip -DestinationPath deps/ffmpeg-arm64
 
           # MKVToolNix ships x64 only; Windows on ARM runs it emulated.
           $mkv = "https://mkvtoolnix.download/windows/releases/102.0/mkvtoolnix-64-bit-102.0.zip"
@@ -86,7 +84,9 @@ jobs:
             Get-ChildItem $out -Filter *.pdb -Recurse | Remove-Item -Force
             Remove-Item "$out/libse.xml" -ErrorAction SilentlyContinue
             Copy-Item "deps/mpv-$arch/*" $out
-            $ffmpeg = Get-ChildItem "deps/ffmpeg-$arch" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+            # x64 ffmpeg in both packages: the winarm64 build crashes on start (0xC0000005) on
+            # Windows 11 ARM, while the x64 one runs fine there under emulation.
+            $ffmpeg = Get-ChildItem "deps/ffmpeg-x64" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
             Copy-Item $ffmpeg.FullName $out
             New-Item -ItemType Directory -Force "$out/mkvtoolnix" | Out-Null
             Copy-Item deps/mkvtoolnix/mkvtoolnix/mkvmerge.exe "$out/mkvtoolnix/"
