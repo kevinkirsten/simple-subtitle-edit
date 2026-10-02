@@ -76,6 +76,18 @@ public class SimpleWindowScreenshots
             Settle(window);
             window.CaptureRenderedFrame()!.Save(Path.Combine(dir, $"main-{suffix}.png"));
             window.Close();
+
+            var info = new Nikse.SubtitleEdit.UiLogic.SimpleSync.MkvInfo(1,
+            [
+                new Nikse.SubtitleEdit.UiLogic.SimpleSync.MkvTrack(2, 3, "subtitles", "HDMV PGS", "eng", "", ""),
+                new Nikse.SubtitleEdit.UiLogic.SimpleSync.MkvTrack(13, 14, "subtitles", "HDMV PGS", "por", "", ""),
+                new Nikse.SubtitleEdit.UiLogic.SimpleSync.MkvTrack(14, 15, "subtitles", "SubRip/SRT", "por", "pt-BR", "Português (Brasil)"),
+            ]);
+            var dialog = new SaveChoiceDialog(new SaveRequest(info, "pt-BR", 15, InsideIsDefault: true));
+            dialog.Show();
+            Settle(window);
+            dialog.CaptureRenderedFrame()!.Save(Path.Combine(dir, $"save-{suffix}.png"));
+            dialog.Close();
         }
     }
 }

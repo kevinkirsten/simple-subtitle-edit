@@ -50,9 +50,10 @@ public sealed class SimpleWindowPlaylistTests : IDisposable
         var point = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window)!.Value;
         window.MouseDown(point, MouseButton.Left);
         window.MouseUp(point, MouseButton.Left);
-        for (var i = 0; i < 5; i++)
+        // Saving on the way out reads the mkv's tracks (a short external process): settle.
+        for (var i = 0; i < 30; i++)
         {
-            await Task.Yield();
+            await Task.Delay(10);
             Pump();
         }
     }
@@ -62,7 +63,7 @@ public sealed class SimpleWindowPlaylistTests : IDisposable
         var player = new FakeVideoPlayer();
         var window = new SimpleWindow(createPlayer: false, player)
         {
-            AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.SideFile),
+            AskSaveDestination = _ => Task.FromResult(new SaveChoice(SaveDestination.SideFile, "pt-BR")),
         };
         window.Show();
         await window.HandleDroppedFilesAsync([_root.FullName]);

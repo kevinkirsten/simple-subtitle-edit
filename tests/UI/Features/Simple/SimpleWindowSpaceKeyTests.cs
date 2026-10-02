@@ -72,7 +72,7 @@ public sealed class SimpleWindowSpaceKeyTests : IDisposable
     public async Task AfterClickingAButton_SpaceTogglesOnce_AndDoesNotPressTheButtonAgain(string buttonId)
     {
         var (window, player) = await OpenAsync();
-        window.AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.Cancel);
+        window.AskSaveDestination = _ => Task.FromResult(new SaveChoice(SaveDestination.Cancel, "pt-BR"));
         window.AskOnlineSettings = _ => Task.FromResult<Nikse.SubtitleEdit.UiLogic.SimpleSync.OpenSubtitlesSettings?>(null);
         var button = Find<Button>(window, buttonId);
         Click(window, button);

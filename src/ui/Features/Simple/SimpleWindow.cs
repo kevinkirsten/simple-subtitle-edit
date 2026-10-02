@@ -42,6 +42,7 @@ public class SimpleWindow : Window
     private readonly Button _playButton;
     private readonly Grid _videoArea;
     private TextBlock? _vmCaptionTarget;
+    private bool _persistSettings;
     private readonly PlayheadOverlay _timelineCursor = new();
     private readonly PlayheadOverlay _minimapCursor = new();
     private bool _frameLoopRunning;
@@ -82,7 +83,8 @@ public class SimpleWindow : Window
         }
         AskLeave = () => UnsavedDialog.AskAsync(this);
         AskOnlineSettings = current => OnlineSettingsDialog.AskAsync(this, current);
-        AskSaveDestination = (track, insideIsDefault) => SaveChoiceDialog.AskAsync(this, track, insideIsDefault);
+        AskSaveDestination = request => SaveChoiceDialog.AskAsync(this, request);
+        _persistSettings = createPlayer;
         if (createPlayer)
         {
             _vm.OnlineSettings = SimpleSettingsStore.Load();
@@ -370,6 +372,27 @@ public class SimpleWindow : Window
     /// <summary>Asks before leaving a subtitle with an unsaved offset. Replaceable in tests.</summary>
     public System.Func<Task<LeaveChoice>> AskLeave { get; set; }
 
+    private void RememberSaveLanguage(string ietf)
+    {
+        if (_vm.OnlineSettings.SaveLanguage == ietf)
+        {
+            return;
+        }
+
+        _vm.OnlineSettings = _vm.OnlineSettings with { SaveLanguage = ietf };
+        if (_persistSettings)
+        {
+            try
+            {
+                SimpleSettingsStore.Save(_vm.OnlineSettings);
+            }
+            catch (Exception)
+            {
+                // remembering the language is a convenience
+            }
+        }
+    }
+
     /// <summary>Shows the OpenSubtitles login dialog. Replaceable in tests.</summary>
     public System.Func<OpenSubtitlesSettings, Task<OpenSubtitlesSettings?>> AskOnlineSettings { get; set; }
 
@@ -642,8 +665,8 @@ public class SimpleWindow : Window
         }
     }
 
-    /// <summary>Asks where to save on an mkv (when mkvmerge is installed). Replaceable in tests.</summary>
-    public System.Func<string, bool, Task<SaveDestination>> AskSaveDestination { get; set; }
+    /// <summary>Asks where (and in which language) to save on an mkv. Replaceable in tests.</summary>
+    public System.Func<SaveRequest, Task<SaveChoice>> AskSaveDestination { get; set; }
 
     /// <returns>True when saved.</returns>
     public async Task<bool> SaveNowAsync()
@@ -652,11 +675,14 @@ public class SimpleWindow : Window
         {
             if (_vm.CanSaveInsideVideo)
             {
-                var insideIsDefault = _vm.SelectedSource?.Kind == SubtitleSourceKind.Matroska;
-                switch (await AskSaveDestination(_vm.EmbedTrackName, insideIsDefault))
+                var edited = _vm.SelectedSource is { Kind: SubtitleSourceKind.Matroska } source ? source.TrackNumber : (int?)null;
+                var request = new SaveRequest(await _vm.ReadVideoTracksAsync(), _vm.EmbedLanguage, edited, InsideIsDefault: edited != null);
+                var choice = await AskSaveDestination(request);
+                switch (choice.Destination)
                 {
                     case SaveDestination.InsideVideo:
-                        return await _vm.SaveInsideVideoAsync();
+                        RememberSaveLanguage(choice.Ietf);
+                        return await _vm.SaveInsideVideoAsync(choice.Ietf);
                     case SaveDestination.Cancel:
                         return false;
                 }

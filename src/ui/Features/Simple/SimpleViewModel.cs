@@ -84,18 +84,31 @@ public partial class SimpleViewModel : ObservableObject
 
     public bool CanSaveInsideVideo => Session != null && MkvmergePath != null && MatroskaEmbedder.CanEmbedInto(VideoFileName);
 
-    /// <summary>Language of the track written into the video ("pt-BR"), from the online search language.</summary>
-    public string EmbedLanguage => MatroskaEmbedder.ToIetf(OnlineSettings.Language);
+    /// <summary>Suggested language for a track written into the video: the last one used, else the search language.</summary>
+    public string EmbedLanguage => MatroskaEmbedder.ToIetf(
+        string.IsNullOrWhiteSpace(OnlineSettings.SaveLanguage) ? OnlineSettings.Language : OnlineSettings.SaveLanguage);
 
-    public string EmbedTrackName => MatroskaEmbedder.TrackNameFor(EmbedLanguage);
+    /// <summary>The subtitle tracks already in the open mkv, for the save dialog. Null if unreadable.</summary>
+    public async Task<MkvInfo?> ReadVideoTracksAsync()
+    {
+        try
+        {
+            return MkvmergePath == null ? null : await MatroskaEmbedder.IdentifyAsync(MkvmergePath, VideoFileName, CancellationToken.None);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// Writes the subtitle (with the offset, trimmed to the video) into the mkv as a text track,
     /// replacing this language's previous text track, then deletes the .srt next to the video.
     /// The player lets go of the file while it is rewritten and reopens it where it was.
     /// </summary>
-    public async Task<bool> SaveInsideVideoAsync()
+    public async Task<bool> SaveInsideVideoAsync(string? language = null)
     {
+        var ietf = MatroskaEmbedder.ToIetf(language ?? EmbedLanguage);
         if (!CanSaveInsideVideo || Session == null)
         {
             return false;
@@ -117,7 +130,7 @@ public partial class SimpleViewModel : ObservableObject
             EmbedResult result;
             try
             {
-                result = await MatroskaEmbedder.EmbedAsync(MkvmergePath!, video, srt, EmbedLanguage, editedTrack, CancellationToken.None);
+                result = await MatroskaEmbedder.EmbedAsync(MkvmergePath!, video, srt, ietf, editedTrack, CancellationToken.None);
             }
             finally
             {

@@ -19,6 +19,9 @@ public sealed record OpenSubtitlesSettings
     /// <summary>OpenSubtitles language code, e.g. "pt-br", "en", "es".</summary>
     public string Language { get; init; } = "pt-br";
 
+    /// <summary>Language of the last subtitle saved inside a video ("pt-BR"); empty = same as <see cref="Language"/>.</summary>
+    public string SaveLanguage { get; init; } = string.Empty;
+
     public bool CanSearch => !string.IsNullOrWhiteSpace(ApiKey);
 
     public bool CanDownload => CanSearch && !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password);

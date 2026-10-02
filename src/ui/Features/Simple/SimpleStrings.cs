@@ -62,6 +62,12 @@ public sealed class SimpleStrings
     public required string SaveSideFile { get; init; }
     public required string SaveInsideVideo { get; init; }
     public required string Embedding { get; init; }
+    public required string SaveLanguageLabel { get; init; }
+    public required string SaveWillReplace { get; init; }
+    public required string SaveWillKeep { get; init; }
+    public required string SaveNothingInLanguage { get; init; }
+    public required string TrackText { get; init; }
+    public required string TrackImage { get; init; }
     public required string Embedded { get; init; }
     public required string PlexNotified { get; init; }
     public required string OnlineSettingsTitle { get; init; }
@@ -116,10 +122,16 @@ public sealed class SimpleStrings
         FindOnline = "FIND ONLINE",
         BackToSimple = "◀ Simple mode",
         SaveWhere = "Where should this subtitle go?",
-        SaveWhereHelp = "NEXT TO THE VIDEO writes a .srt with the video's name. INSIDE THE VIDEO adds it to the mkv as a text track (can be turned off, and edited here again), replacing the previous one in this language, and deletes the .srt. Image subtitles already in the file are kept. The mkv is rewritten (a few seconds per GB) and checked before it replaces the original.",
+        SaveWhereHelp = "NEXT TO THE VIDEO writes a .srt with the video's name. INSIDE THE VIDEO adds it to the mkv as a text track in the language above (can be turned off, and edited here again) and deletes the .srt. The mkv is rewritten (a few seconds per GB) and checked before it replaces the original.",
         SaveSideFile = "NEXT TO THE VIDEO (.srt)",
         SaveInsideVideo = "INSIDE THE VIDEO ({0})",
         Embedding = "Writing the subtitle into the video… (rewrites the mkv)",
+        SaveLanguageLabel = "LANGUAGE",
+        SaveWillReplace = "⚠ Already inside in this language, will be REPLACED: {0}.",
+        SaveWillKeep = "Also inside, kept as they are: {0}.",
+        SaveNothingInLanguage = "Nothing in this language inside the video yet.",
+        TrackText = "text",
+        TrackImage = "image",
         Embedded = "Saved inside the video as track {0}.",
         PlexNotified = " Plex was told to reload it.",
         OnlineSettingsTitle = "OpenSubtitles.com",
@@ -175,10 +187,16 @@ public sealed class SimpleStrings
         FindOnline = "BUSCAR ONLINE",
         BackToSimple = "◀ Modo simples",
         SaveWhere = "Onde salvar esta legenda?",
-        SaveWhereHelp = "AO LADO DO VÍDEO grava um .srt com o nome do vídeo. DENTRO DO VÍDEO coloca a legenda no mkv como faixa de texto (dá para desligar e editar aqui de novo), trocando a anterior deste idioma, e apaga o .srt. As legendas de imagem que já estão no arquivo ficam. O mkv é regravado (alguns segundos por GB) e conferido antes de substituir o original.",
+        SaveWhereHelp = "AO LADO DO VÍDEO grava um .srt com o nome do vídeo. DENTRO DO VÍDEO coloca a legenda no mkv como faixa de texto no idioma acima (dá para desligar e editar aqui de novo) e apaga o .srt. O mkv é regravado (alguns segundos por GB) e conferido antes de substituir o original.",
         SaveSideFile = "AO LADO DO VÍDEO (.srt)",
         SaveInsideVideo = "DENTRO DO VÍDEO ({0})",
         Embedding = "Gravando a legenda dentro do vídeo… (regrava o mkv)",
+        SaveLanguageLabel = "IDIOMA",
+        SaveWillReplace = "⚠ Já existe dentro do vídeo neste idioma e será SUBSTITUÍDA: {0}.",
+        SaveWillKeep = "Também dentro, ficam como estão: {0}.",
+        SaveNothingInLanguage = "Ainda não há nada neste idioma dentro do vídeo.",
+        TrackText = "texto",
+        TrackImage = "imagem",
         Embedded = "Salva dentro do vídeo como faixa {0}.",
         PlexNotified = " O Plex foi avisado para recarregar.",
         OnlineSettingsTitle = "OpenSubtitles.com",

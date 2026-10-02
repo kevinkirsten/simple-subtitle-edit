@@ -59,7 +59,7 @@ public sealed class SimpleWindowE2ETests : IDisposable
         var player = new FakeVideoPlayer();
         var window = new SimpleWindow(createPlayer: false, player)
         {
-            AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.SideFile),
+            AskSaveDestination = _ => Task.FromResult(new SaveChoice(SaveDestination.SideFile, "pt-BR")),
         };
         window.Show();
         await window.OpenVideoAsync(_video);
@@ -413,7 +413,14 @@ public sealed class SimpleWindowE2ETests : IDisposable
 
         Click(window, Find<Button>(window, "Save"));
 
+        // SAVE first reads the mkv's tracks for the dialog: give it a moment.
         var output = Path.Combine(_dir.FullName, "Show S01E01.srt");
+        for (var i = 0; i < 300 && window.ViewModel.SelectedSource?.DisplayName != "Show S01E01.srt"; i++)
+        {
+            await Task.Delay(10);
+            Pump();
+        }
+
         Assert.True(File.Exists(output));
         var saved = Subtitle.Parse(output);
         Assert.Equal(0, saved.Paragraphs[0].StartTime.TotalMilliseconds);

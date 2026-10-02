@@ -41,6 +41,8 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
 
 ![Empty window: drop a video here](docs/images/simple/empty-en.png)
 
+![Saving inside the video: pick the language; it warns what is already inside](docs/images/simple/save-en.png)
+
 ## Keyboard
 
 | Key | Action |
@@ -123,6 +125,8 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
 
 ![Simple Subtitle Edit em português, com uma legenda atrasada sendo corrigida](docs/images/simple/main-pt.png)
 
+![Salvar dentro do vídeo: escolha o idioma; ele avisa o que já existe dentro](docs/images/simple/save-pt.png)
+
 ### Como usar
 
 1. **Arraste o vídeo, ou a pasta inteira da série, para a janela** (ou clique em **ABRIR
@@ -141,8 +145,10 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
    quando você escolhe uma, e cada uma só uma vez. A chave de API e o login ficam em **⚙**,
    guardados só no seu computador.
 4. **SALVAR**. Num mkv, ele pergunta onde: **ao lado do vídeo** (`.srt` com o nome do vídeo; o
-   antigo vira `.srt.bak`) ou **dentro do vídeo**, como faixa de texto no seu idioma
-   ("Português (Brasil)", `pt-BR`), trocando a anterior desse idioma e apagando o `.srt`. As
+   antigo vira `.srt.bak`) ou **dentro do vídeo**, como faixa de texto no **idioma que você
+   escolher** ("Português (Brasil)", `pt-BR`; ele lembra o último). Ele avisa qual faixa desse
+   idioma já existe e vai ser substituída, quais ficam, e apaga o `.srt`. Outros formatos de
+   vídeo salvam ao lado. As
    legendas de imagem do arquivo ficam. Da próxima vez, essa faixa aparece como **NO VÍDEO** e a
    edição volta para dentro do arquivo. Falas depois do fim do vídeo são cortadas, e o Plex do
    mesmo computador é avisado para recarregar.

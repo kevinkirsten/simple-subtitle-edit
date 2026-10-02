@@ -51,13 +51,22 @@ public class MatroskaEmbedderTests
     }
 
     [Fact]
-    public void TracksToReplace_IncludesTheTrackBeingEdited()
+    public void TracksToReplace_EditingAnotherLanguageTrack_KeepsIt()
     {
         var info = MatroskaEmbedder.ParseIdentify(IdentifyJson);
 
-        var remove = MatroskaEmbedder.TracksToReplace(info, "pt-BR", editedTrackNumber: 5);
+        var remove = MatroskaEmbedder.TracksToReplace(info, "pt-BR", editedTrackNumber: 5); // 5 is English
 
-        Assert.Equal([4, 5], remove.Select(t => t.Number));
+        Assert.Equal([4], remove.Select(t => t.Number));
+    }
+
+    [Fact]
+    public void TracksToReplace_EditedTrackWithoutLanguage_IsReplaced()
+    {
+        var info = new MkvInfo(1, [new MkvTrack(2, 3, "subtitles", "SubRip/SRT", "und", "", "")]);
+
+        Assert.Equal([3], MatroskaEmbedder.TracksToReplace(info, "pt-BR", editedTrackNumber: 3).Select(t => t.Number));
+        Assert.Empty(MatroskaEmbedder.TracksToReplace(info, "pt-BR", editedTrackNumber: null));
     }
 
     [Fact]

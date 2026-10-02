@@ -42,7 +42,7 @@ public sealed class SimpleWindowEmbedTests : IDisposable
         var plexCalls = 0;
         var window = new SimpleWindow(createPlayer: false, player)
         {
-            AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.InsideVideo),
+            AskSaveDestination = _ => Task.FromResult(new SaveChoice(SaveDestination.InsideVideo, "pt-BR")),
         };
         window.ViewModel.PlexRefresh = _ => { plexCalls++; return Task.FromResult(true); };
         window.Show();
@@ -74,12 +74,64 @@ public sealed class SimpleWindowEmbedTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task SaveInsideVideo_InAnotherLanguage_AndTheDialogSeesWhatIsInside()
+    {
+        var video = await MakeMkvAsync();
+        SaveRequest? lastRequest = null;
+        var language = "en";
+        var window = new SimpleWindow(createPlayer: false, new FakeVideoPlayer(20))
+        {
+            AskSaveDestination = r => { lastRequest = r; return Task.FromResult(new SaveChoice(SaveDestination.InsideVideo, language)); },
+        };
+        window.Show();
+        await window.OpenVideoAsync(video);
+
+        Assert.True(await window.SaveNowAsync());
+        Assert.Equal("pt-BR", lastRequest!.Ietf); // suggestion before the user picked another
+        Assert.Equal("en", window.ViewModel.EmbedLanguage); // remembered for next time
+        Assert.Contains("English", window.ViewModel.SelectedSource!.DisplayName);
+
+        // Second save, Portuguese: the dialog is told the English track is inside, and it stays.
+        language = "pt-BR";
+        Assert.True(await window.SaveNowAsync());
+        Assert.Contains(lastRequest!.Info!.Tracks, t => t.LanguageIetf == "en");
+        Assert.Equal("Nothing in this language inside the video yet.", SaveChoiceDialog.DescribeExisting(lastRequest, "pt-BR"));
+        Assert.StartsWith("⚠ Already inside in this language, will be REPLACED: #", SaveChoiceDialog.DescribeExisting(lastRequest, "en"));
+
+        var info = await MatroskaEmbedder.IdentifyAsync(MatroskaEmbedder.FindMkvmerge()!, video, TestContext.Current.CancellationToken);
+        Assert.Equal(["en", "pt-BR"], info.Tracks.Where(t => t.Type == "subtitles").Select(t => t.LanguageIetf).OrderBy(x => x));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void SaveDialog_ShowsTheLanguagePicker_AndUpdatesTheWarning()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var info = new MkvInfo(1, [new MkvTrack(13, 14, "subtitles", "HDMV PGS", "por", "", ""), new MkvTrack(14, 15, "subtitles", "SubRip/SRT", "por", "pt-BR", "Português (Brasil)")]);
+        var dialog = new SaveChoiceDialog(new SaveRequest(info, "pt-BR", null, InsideIsDefault: false));
+        dialog.Show();
+        Dispatcher.UIThread.RunJobs();
+        var picker = Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(dialog).OfType<Avalonia.Controls.ComboBox>().Single();
+        var warning = Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(dialog).OfType<Avalonia.Controls.TextBlock>()
+            .First(t => Avalonia.Automation.AutomationProperties.GetAutomationId(t) == "SaveLanguageWarning");
+
+        Assert.Equal("pt-BR", ((SubtitleLanguage)picker.SelectedItem!).Ietf);
+        Assert.Contains("REPLACED: #15 Português (Brasil) (text)", warning.Text);
+        Assert.Contains("kept as they are: #14 por (image)", warning.Text);
+
+        picker.SelectedItem = SubtitleLanguages.All.First(l => l.Ietf == "es");
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("Nothing in this language inside the video yet.", warning.Text);
+        dialog.Close();
+    }
+
+    [AvaloniaFact]
     public async Task SaveChoice_Cancel_ChangesNothing()
     {
         var video = await MakeMkvAsync();
         var window = new SimpleWindow(createPlayer: false, new FakeVideoPlayer(20))
         {
-            AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.Cancel),
+            AskSaveDestination = _ => Task.FromResult(new SaveChoice(SaveDestination.Cancel, "pt-BR")),
         };
         window.Show();
         await window.OpenVideoAsync(video);

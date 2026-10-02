@@ -77,17 +77,18 @@ public static class MatroskaEmbedder
     }
 
     /// <summary>
-    /// Text subtitle tracks the new one replaces: the track being edited, plus any text track in
-    /// the same language, so saving twice never leaves two pt-BR tracks. Image tracks (PGS/VobSub)
-    /// are always kept.
+    /// Text subtitle tracks the new one replaces: any text track in the same language, so saving
+    /// twice never leaves two pt-BR tracks; and the track being edited when it has no language
+    /// tag. Editing the English track and saving it as pt-BR keeps the English one. Image
+    /// tracks (PGS/VobSub) are always kept.
     /// </summary>
     public static List<MkvTrack> TracksToReplace(MkvInfo info, string ietf, int? editedTrackNumber)
     {
         return info.Tracks
             .Where(t => t.IsTextSubtitle)
-            .Where(t => t.Number == editedTrackNumber ||
-                        t.LanguageIetf.Equals(ietf, StringComparison.OrdinalIgnoreCase) ||
-                        (ietf.Equals("pt-BR", StringComparison.OrdinalIgnoreCase) && t.Language == "pob"))
+            .Where(t => t.LanguageIetf.Equals(ietf, StringComparison.OrdinalIgnoreCase) ||
+                        (ietf.Equals("pt-BR", StringComparison.OrdinalIgnoreCase) && t.Language == "pob") ||
+                        (t.Number == editedTrackNumber && string.IsNullOrEmpty(t.LanguageIetf) && t.Language is "" or "und"))
             .ToList();
     }
 
