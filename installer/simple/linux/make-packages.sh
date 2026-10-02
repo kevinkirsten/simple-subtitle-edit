@@ -30,13 +30,16 @@ deb="$work/deb"
 stage "$deb"
 install -d "$deb/DEBIAN"
 size=$(du -sk "$deb/opt" | cut -f1)
+# .NET needs ICU, and every Debian/Ubuntu release names it after its version (libicu74,
+# libicu78, ...). Any one of them works, newest first; names that do not exist are ignored.
+icu_alternatives=$(seq 90 -1 60 | sed 's/^/libicu/' | paste -sd'|' - | sed 's/|/ | /g')
 cat > "$deb/DEBIAN/control" <<CONTROL
 Package: simple-subtitle-edit
 Version: $version
 Architecture: $deb_arch
 Maintainer: Simple Subtitle Edit <https://github.com/kevinkirsten/simple-subtitle-edit>
 Installed-Size: $size
-Depends: libmpv2 | libmpv1, ffmpeg, mkvtoolnix, libicu74 | libicu76 | libicu72 | libicu70 | libicu67
+Depends: libmpv2 | libmpv1, ffmpeg, mkvtoolnix, $icu_alternatives
 Section: video
 Priority: optional
 Homepage: https://github.com/kevinkirsten/simple-subtitle-edit

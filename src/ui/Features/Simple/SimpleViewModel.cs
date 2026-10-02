@@ -553,9 +553,15 @@ public partial class SimpleViewModel : ObservableObject
             return;
         }
 
-        if (Duration <= 0 && _player.Duration > 0)
+        // The player may report the duration a moment after loading (mpv on Linux): until then a
+        // provisional one (waveform length, last subtitle line) is used, and replaced here.
+        var playerDuration = _player.Duration;
+        if (playerDuration > 0 && Math.Abs(playerDuration - Duration) > 0.05)
         {
-            Duration = _player.Duration;
+            Duration = playerDuration;
+            ViewStart = ClampViewStart(ViewStart);
+            TimeText = SyncSession.FormatTime(Position) + " / " + SyncSession.FormatTime(Duration);
+            RaiseRedraw();
         }
 
         if (_scrubbing)

@@ -343,6 +343,27 @@ public sealed class SimpleWindowE2ETests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task DurationReportedLate_ReplacesTheProvisionalOne()
+    {
+        // mpv on Linux answers "duration" a moment after the file opens.
+        var player = new FakeVideoPlayer(duration: 0);
+        var window = new SimpleWindow(createPlayer: false, player);
+        window.Show();
+        await window.OpenVideoAsync(_video);
+        await window.ViewModel.WaveformLoading;
+        Assert.Equal(15.5, window.ViewModel.Duration); // provisional: end of the last subtitle line
+
+        player.Duration = 90;
+        window.ViewModel.Tick();
+        Pump();
+
+        Assert.Equal(90, window.ViewModel.Duration);
+        Assert.EndsWith("/ 01:30.000", Find<TextBlock>(window, "Time").Text);
+        Assert.Equal(90, window.Minimap.Duration);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task DraggingTheAudioLane_ScrollsInsteadOfMovingTheSubtitle()
     {
         var (window, _) = await OpenAsync();

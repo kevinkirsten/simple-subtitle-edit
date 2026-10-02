@@ -61,7 +61,7 @@ public sealed class FakeVideoPlayer : IVideoPlayer
             }
         }
     }
-    public double Duration { get; }
+    public double Duration { get; set; }
     public int VolumeMaximum => 100;
     public double Volume { get; set; } = 100;
     public double Speed { get; set; } = 1;
