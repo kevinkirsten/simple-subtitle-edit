@@ -68,7 +68,8 @@ jobs:
           # MKVToolNix ships x64 only; Windows on ARM runs it emulated.
           $mkv = "https://mkvtoolnix.download/windows/releases/102.0/mkvtoolnix-64-bit-102.0.zip"
           Invoke-WebRequest $mkv -OutFile mkvtoolnix.zip
-          $expected = ((Invoke-WebRequest "$mkv.sha256").Content -split '\s+')[0]
+          $expected = ([string](Invoke-RestMethod "$mkv.sha256") -split '\s+')[0]
+          Write-Host "expected $expected"
           $actual = (Get-FileHash mkvtoolnix.zip -Algorithm SHA256).Hash
           if ($actual -ne $expected) { throw "mkvtoolnix checksum mismatch" }
           Expand-Archive mkvtoolnix.zip -DestinationPath deps/mkvtoolnix

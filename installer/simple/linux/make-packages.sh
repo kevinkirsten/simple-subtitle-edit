@@ -59,7 +59,6 @@ Release:        1
 Summary:        Fix out-of-sync subtitles
 License:        MIT
 URL:            https://github.com/kevinkirsten/simple-subtitle-edit
-BuildArch:      $rpm_arch
 Requires:       (mpv-libs or libmpv2), (ffmpeg-free or ffmpeg), mkvtoolnix, libicu
 AutoReqProv:    no
 %global __os_install_post %{nil}
@@ -78,7 +77,9 @@ cp -a $work/rpmstage/. %{buildroot}/
 /usr/share/applications/simple-subtitle-edit.desktop
 /usr/share/icons/hicolor/256x256/apps/simple-subtitle-edit.png
 SPEC
-  rpmbuild --define "_topdir $rpmroot" --target "$rpm_arch" -bb "$rpmroot/SPECS/simple-subtitle-edit.spec" >/dev/null
+  # No BuildArch in the spec: rpmbuild refuses a foreign BuildArch (aarch64 on an x86_64
+  # runner), but --target packages the prebuilt files for it.
+  rpmbuild --define "_topdir $rpmroot" --target "$rpm_arch-linux" -bb "$rpmroot/SPECS/simple-subtitle-edit.spec" >/dev/null
   cp "$rpmroot"/RPMS/*/*.rpm "$out/"
 fi
 
