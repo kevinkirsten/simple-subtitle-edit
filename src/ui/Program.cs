@@ -602,7 +602,7 @@ namespace Nikse.SubtitleEdit
             SimpleWindowInstance = window;
 
             // A video passed on the command line opens right away; subtitle files are added to the picker.
-            var files = args.Where(System.IO.File.Exists).ToList();
+            var files = args.Where(a => System.IO.File.Exists(a) || System.IO.Directory.Exists(a)).ToList();
             if (files.Count > 0)
             {
                 window.Opened += async (_, _) => await window.HandleDroppedFilesAsync(files);
