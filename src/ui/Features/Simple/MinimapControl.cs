@@ -79,9 +79,10 @@ public class MinimapControl : Control
         context.FillRectangle(BrutalTheme.Viewport, viewport);
         context.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#0057FF")), 2), viewport);
 
-        var cx = SecondsToX(Position);
-        context.DrawLine(BrutalTheme.CursorPen, new Point(cx, 0), new Point(cx, height));
+        RenderCount++;
     }
+
+    public int RenderCount { get; private set; }
 
     private void DrawOverview(DrawingContext context, int width, double top, double bottom)
     {
@@ -96,17 +97,35 @@ public class MinimapControl : Control
             _overview = BuildOverview(peaks, width);
             _overviewSource = peaks;
             _overviewWidth = width;
+            _overviewGeometry = null;
         }
 
-        var mid = (top + bottom) / 2;
-        var half = (bottom - top) / 2;
-        var pen = new Pen(BrutalTheme.Wave, 1);
-        for (var x = 0; x < _overview.Length; x++)
+        if (_overviewGeometry == null || _overviewGeometryHeight != bottom)
         {
-            var h = _overview[x] * half / peaks.HighestPeak;
-            context.DrawLine(pen, new Point(x + 0.5, mid - h), new Point(x + 0.5, mid + h + 1));
+            var mid = (top + bottom) / 2;
+            var half = (bottom - top) / 2;
+            var geometry = new StreamGeometry();
+            using (var ctx = geometry.Open())
+            {
+                for (var x = 0; x < _overview.Length; x++)
+                {
+                    var h = _overview[x] * half / peaks.HighestPeak;
+                    ctx.BeginFigure(new Point(x + 0.5, mid - h), false);
+                    ctx.LineTo(new Point(x + 0.5, mid + h + 1));
+                    ctx.EndFigure(false);
+                }
+            }
+
+            _overviewGeometry = geometry;
+            _overviewGeometryHeight = bottom;
         }
+
+        context.DrawGeometry(null, OverviewPen, _overviewGeometry);
     }
+
+    private static readonly Pen OverviewPen = new(BrutalTheme.Wave, 1);
+    private StreamGeometry? _overviewGeometry;
+    private double _overviewGeometryHeight;
 
     /// <summary>Loudest peak per pixel column, computed once per width.</summary>
     public static int[] BuildOverview(WavePeakData2 peaks, int width)

@@ -29,6 +29,13 @@ public partial class SimpleViewModel : ObservableObject
     private long _lastSeekIssued;
     private double _seekTarget = -1;
     private long _seekGuardUntil;
+
+    // Smooth cursor: mpv reports a new time once per video frame (24/s on film); between two
+    // reports the cursor advances by the elapsed wall time, so it moves at the screen's rate.
+    private double _lastRaw = -1;
+    private long _lastRawAt;
+    private object? _activeParagraph;
+    private long _lastTimeTextAt;
     private OpenSubtitlesClient? _onlineClient;
     private OpenSubtitlesSettings _onlineSettings = new();
     private static readonly System.Net.Http.HttpClient SharedHttp = new() { Timeout = TimeSpan.FromSeconds(30) };
@@ -67,6 +74,9 @@ public partial class SimpleViewModel : ObservableObject
     public double ViewSeconds { get; private set; } = 20;
 
     public VideoPlaylist? Playlist { get; private set; }
+
+    /// <summary>The background waveform extraction of the open video (done when it completes).</summary>
+    public Task WaveformLoading { get; private set; } = Task.CompletedTask;
 
     /// <summary>Builds the OpenSubtitles client; tests swap in one backed by a fake server.</summary>
     public Func<OpenSubtitlesSettings, OpenSubtitlesClient> OnlineClientFactory { get; set; } =
@@ -186,8 +196,11 @@ public partial class SimpleViewModel : ObservableObject
         HasNext = Playlist?.HasNext ?? false;
     }
 
-    /// <summary>Raised whenever the timeline or minimap need to repaint.</summary>
+    /// <summary>The timeline/overview content changed (view, offset, subtitle, waveform): repaint them.</summary>
     public event Action? Redraw;
+
+    /// <summary>Only the playback cursor moved: move the cursor layers, repaint nothing else.</summary>
+    public event Action? CursorMoved;
 
     public bool IsPlaying => _player?.IsPlaying ?? false;
 
@@ -239,7 +252,7 @@ public partial class SimpleViewModel : ObservableObject
         }
 
         UpdateDurationFallback();
-        _ = LoadWaveformAsync(fileName);
+        WaveformLoading = LoadWaveformAsync(fileName);
         RaiseRedraw();
     }
 
@@ -397,8 +410,7 @@ public partial class SimpleViewModel : ObservableObject
 
         Position = seconds;
         EnsureVisible(seconds);
-        UpdateCurrentLine();
-        RaiseRedraw();
+        CursorChanged();
     }
 
     public void SeekRelative(double seconds) => Seek(Position + seconds);
@@ -433,19 +445,58 @@ public partial class SimpleViewModel : ObservableObject
         }
 
         _seekTarget = -1;
+        var now = System.Diagnostics.Stopwatch.GetTimestamp();
+        if (Math.Abs(position - _lastRaw) > 0.0001)
+        {
+            _lastRaw = position;
+            _lastRawAt = now;
+        }
+
+        if (_player.IsPlaying)
+        {
+            var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(_lastRawAt, now).TotalSeconds;
+            var estimate = _lastRaw + Math.Min(elapsed, 0.25) * (_player.Speed > 0 ? _player.Speed : 1);
+
+            // Never step back a hair when the next real report lands slightly behind the estimate.
+            position = estimate < Position && Position - estimate < 0.1 ? Position : estimate;
+        }
+
         if (Math.Abs(position - Position) < 0.0005)
         {
             return;
         }
 
         Position = position;
+        var viewChanged = false;
         if (_player.IsPlaying && (position > ViewStart + ViewSeconds * 0.9 || position < ViewStart))
         {
             ViewStart = ClampViewStart(position - ViewSeconds * 0.1);
+            viewChanged = true;
         }
 
-        UpdateCurrentLine();
-        RaiseRedraw();
+        var active = Session?.ActiveAt(Position);
+        var lineChanged = !ReferenceEquals(active, _activeParagraph);
+        if (lineChanged)
+        {
+            _activeParagraph = active;
+            CurrentLineText = active?.Text ?? string.Empty;
+        }
+
+        // The time label re-lays out text: 10 updates a second are plenty.
+        if (System.Diagnostics.Stopwatch.GetElapsedTime(_lastTimeTextAt, now).TotalMilliseconds >= 100)
+        {
+            _lastTimeTextAt = now;
+            TimeText = SyncSession.FormatTime(Position) + " / " + SyncSession.FormatTime(Duration);
+        }
+
+        if (viewChanged || lineChanged)
+        {
+            RaiseRedraw(); // the highlighted block changed, or the view paged forward
+        }
+        else
+        {
+            CursorMoved?.Invoke();
+        }
     }
 
     /// <summary>Cmd/Ctrl + press on the timeline: pause, and move the cursor with the mouse.</summary>
@@ -467,8 +518,7 @@ public partial class SimpleViewModel : ObservableObject
         Position = seconds;
         _pendingSeek = seconds;
         FlushPendingSeek();
-        UpdateCurrentLine();
-        RaiseRedraw();
+        CursorChanged();
     }
 
     public void EndScrub(double seconds)
@@ -572,11 +622,33 @@ public partial class SimpleViewModel : ObservableObject
         Duration = Math.Max(fromPeaks, fromSubtitle);
     }
 
-    private void UpdateCurrentLine()
+    /// <returns>True when the line on screen changed (its block is highlighted, so repaint).</returns>
+    private bool UpdateCurrentLine()
     {
         TimeText = SyncSession.FormatTime(Position) + " / " + SyncSession.FormatTime(Duration);
-        CurrentLineText = Session?.ActiveAt(Position)?.Text ?? string.Empty;
+        var active = Session?.ActiveAt(Position);
+        CurrentLineText = active?.Text ?? string.Empty;
+        var changed = !ReferenceEquals(active, _activeParagraph);
+        _activeParagraph = active;
+        return changed;
     }
 
-    private void RaiseRedraw() => Redraw?.Invoke();
+    /// <summary>After the cursor moved: full repaint only if the highlighted line changed.</summary>
+    private void CursorChanged()
+    {
+        if (UpdateCurrentLine())
+        {
+            RaiseRedraw();
+        }
+        else
+        {
+            CursorMoved?.Invoke();
+        }
+    }
+
+    private void RaiseRedraw()
+    {
+        Redraw?.Invoke();
+        CursorMoved?.Invoke();
+    }
 }

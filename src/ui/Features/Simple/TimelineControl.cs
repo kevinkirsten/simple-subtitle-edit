@@ -84,12 +84,11 @@ public class TimelineControl : Control
         context.DrawLine(BrutalTheme.InkPen, new Point(0, waveTop), new Point(width, waveTop));
         context.DrawLine(BrutalTheme.InkPen, new Point(0, textTop), new Point(width, textTop));
 
-        var cursorX = SecondsToX(Position);
-        if (cursorX >= 0 && cursorX <= width)
-        {
-            context.DrawLine(BrutalTheme.CursorPen, new Point(cursorX, 0), new Point(cursorX, height));
-        }
+        RenderCount++;
     }
+
+    /// <summary>How many times the static layer was drawn (tests check playback does not redraw it).</summary>
+    public int RenderCount { get; private set; }
 
     private void DrawTimeAxis(DrawingContext context, double width)
     {
@@ -131,9 +130,27 @@ public class TimelineControl : Control
             return;
         }
 
+        var key = (peaks, ViewStart, ViewSeconds, width, top, bottom);
+        if (_waveGeometry == null || !key.Equals(_waveKey))
+        {
+            _waveGeometry = BuildWaveGeometry(peaks, width, top, bottom);
+            _waveKey = key;
+        }
+
+        context.DrawGeometry(null, WavePen, _waveGeometry);
+    }
+
+    private static readonly Pen WavePen = new(BrutalTheme.Wave, 1);
+    private StreamGeometry? _waveGeometry;
+    private (WavePeakData2, double, double, double, double, double) _waveKey;
+
+    /// <summary>All waveform columns as one geometry: one draw call instead of one per pixel.</summary>
+    private StreamGeometry BuildWaveGeometry(WavePeakData2 peaks, double width, double top, double bottom)
+    {
+        var geometry = new StreamGeometry();
+        using var ctx = geometry.Open();
         var mid = (top + bottom) / 2;
         var half = (bottom - top) / 2 - 2;
-        var pen = new Pen(BrutalTheme.Wave, 1);
         var span = peaks.AsSpan();
         var peaksPerSecond = peaks.SampleRate;
         for (var x = 0; x < (int)width; x++)
@@ -155,8 +172,12 @@ public class TimelineControl : Control
 
             var yMax = mid - max * half / peaks.HighestPeak;
             var yMin = mid - min * half / peaks.HighestPeak;
-            context.DrawLine(pen, new Point(x + 0.5, yMax), new Point(x + 0.5, Math.Max(yMin, yMax + 1)));
+            ctx.BeginFigure(new Point(x + 0.5, yMax), false);
+            ctx.LineTo(new Point(x + 0.5, Math.Max(yMin, yMax + 1)));
+            ctx.EndFigure(false);
         }
+
+        return geometry;
     }
 
     private void DrawSubtitleBlocks(DrawingContext context, double top, double bottom)

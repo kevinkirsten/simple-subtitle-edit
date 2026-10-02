@@ -60,6 +60,7 @@ public sealed class SimpleWindowE2ETests : IDisposable
         var window = new SimpleWindow(createPlayer: false, player);
         window.Show();
         await window.OpenVideoAsync(_video);
+        await window.ViewModel.WaveformLoading; // finishes (fails: not a real video) and repaints once
         Pump();
         return (window, player);
     }
@@ -235,6 +236,82 @@ public sealed class SimpleWindowE2ETests : IDisposable
         player.SeekLanded = true;
         window.ViewModel.Tick();
         Assert.Equal(12.04, window.ViewModel.Position, 3);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Playback_MovesOnlyTheCursorLayer_NotTheWaveformOrBlocks()
+    {
+        var (window, player) = await OpenAsync();
+        player.Play();
+        player.Position = 4.0; // in the gap between two lines
+        player.Seeks.Clear();
+        window.ViewModel.Tick();
+        for (var i = 0; i < 10; i++)
+        {
+            Pump(); // let the first layout and paint finish before counting
+        }
+
+        var timelineRenders = window.Timeline.RenderCount;
+        var minimapRenders = window.Minimap.RenderCount;
+        var x0 = window.TimelineCursor.X;
+
+        // 30 frames of playback inside the same gap.
+        for (var i = 1; i <= 30; i++)
+        {
+            player.Position = 4.0 + i * 0.04;
+            player.SeekLanded = true;
+            window.ViewModel.Tick();
+            Pump();
+            Assert.True(timelineRenders == window.Timeline.RenderCount, $"frame {i}: renders {window.Timeline.RenderCount} (was {timelineRenders}), viewStart {window.ViewModel.ViewStart}, line '{window.ViewModel.CurrentLineText}', cursorVisible {window.TimelineCursor.IsVisible}");
+        }
+
+        Assert.Equal(timelineRenders, window.Timeline.RenderCount);
+        Assert.Equal(minimapRenders, window.Minimap.RenderCount);
+        Assert.True(window.TimelineCursor.X > x0 + 10, $"cursor moved from {x0} to {window.TimelineCursor.X}");
+        Assert.InRange(window.TimelineCursor.X, window.Timeline.SecondsToX(5.1), window.Timeline.SecondsToX(5.5));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Playback_EnteringALine_RepaintsOnceToHighlightIt()
+    {
+        var (window, player) = await OpenAsync();
+        player.Play();
+        player.Position = 1.0;
+        window.ViewModel.Tick();
+        for (var i = 0; i < 10; i++)
+        {
+            Pump();
+        }
+
+        var renders = window.Timeline.RenderCount;
+
+        player.Position = 1.6; // the first line starts at 1.5 s
+        window.ViewModel.Tick();
+        Pump();
+        player.Position = 1.7;
+        window.ViewModel.Tick();
+        Pump();
+
+        Assert.Equal(renders + 1, window.Timeline.RenderCount);
+        Assert.Equal("Tony, você precisa ver isso.", window.ViewModel.CurrentLineText);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Playback_CursorAdvancesBetweenVideoFrames()
+    {
+        var (window, player) = await OpenAsync();
+        player.Play();
+        player.Position = 10.0;
+        window.ViewModel.Tick();
+
+        // mpv has not reported a new frame yet, but time passes: the cursor keeps moving.
+        await Task.Delay(30, TestContext.Current.CancellationToken);
+        window.ViewModel.Tick();
+
+        Assert.InRange(window.ViewModel.Position, 10.02, 10.25);
         window.Close();
     }
 

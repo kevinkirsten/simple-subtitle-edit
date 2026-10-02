@@ -40,6 +40,9 @@ public class SimpleWindow : Window
     private readonly DispatcherTimer _timer;
     private readonly Button _playButton;
     private readonly Grid _videoArea;
+    private readonly PlayheadOverlay _timelineCursor = new();
+    private readonly PlayheadOverlay _minimapCursor = new();
+    private bool _frameLoopRunning;
 
     public SimpleWindow() : this(createPlayer: true)
     {
@@ -197,7 +200,7 @@ public class SimpleWindow : Window
 
         var timelineRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Height = 190 };
         timelineRow.Children.Add(laneLabels);
-        var timelineBox = BrutalTheme.Box(_timeline);
+        var timelineBox = BrutalTheme.Box(new Grid { ClipToBounds = true, Children = { _timeline, _timelineCursor } });
         Grid.SetColumn(timelineBox, 1);
         timelineRow.Children.Add(timelineBox);
         Grid.SetColumn(zoomColumn, 2);
@@ -208,7 +211,7 @@ public class SimpleWindow : Window
         overviewLabel.TextWrapping = TextWrapping.Wrap;
         var overviewRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
         overviewRow.Children.Add(overviewLabel);
-        var minimapBox = BrutalTheme.Box(_minimap);
+        var minimapBox = BrutalTheme.Box(new Grid { ClipToBounds = true, Children = { _minimap, _minimapCursor } });
         Grid.SetColumn(minimapBox, 1);
         overviewRow.Children.Add(minimapBox);
         var spacer = new Control { Width = 50 };
@@ -277,6 +280,9 @@ public class SimpleWindow : Window
         Content = root;
 
         _vm.Redraw += Redraw;
+        _vm.CursorMoved += MoveCursors;
+        _timeline.SizeChanged += (_, _) => MoveCursors();
+        _minimap.SizeChanged += (_, _) => MoveCursors();
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(SimpleViewModel.HasVideo))
@@ -299,11 +305,18 @@ public class SimpleWindow : Window
         AddHandler(DragDrop.DropEvent, OnDrop, RoutingStrategies.Bubble);
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
 
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) };
+        // Idle: a light poll notices play/pause from the keyboard or the player itself.
+        // Playing: one update per screen frame (up to 120 Hz), see OnFrame.
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _timer.Tick += (_, _) =>
         {
             _vm.Tick();
             _playButton.Content = _vm.IsPlaying ? "❚❚" : "▶";
+            if (_vm.IsPlaying && !_frameLoopRunning)
+            {
+                _frameLoopRunning = true;
+                RequestAnimationFrame(OnFrame);
+            }
         };
         _timer.Start();
         Closed += (_, _) =>
@@ -481,6 +494,27 @@ public class SimpleWindow : Window
         Grid.SetRow(control, row);
         grid.Children.Add(control);
     }
+
+    private void OnFrame(TimeSpan _)
+    {
+        if (IsClosed || !_vm.IsPlaying)
+        {
+            _frameLoopRunning = false;
+            _vm.Tick();
+            return;
+        }
+
+        _vm.Tick();
+        RequestAnimationFrame(OnFrame);
+    }
+
+    private void MoveCursors()
+    {
+        _timelineCursor.MoveTo(_timeline.SecondsToX(_vm.Position), _timeline.Bounds.Width);
+        _minimapCursor.MoveTo(_minimap.SecondsToX(_vm.Position), _minimap.Bounds.Width);
+    }
+
+    public PlayheadOverlay TimelineCursor => _timelineCursor;
 
     private void Redraw()
     {
