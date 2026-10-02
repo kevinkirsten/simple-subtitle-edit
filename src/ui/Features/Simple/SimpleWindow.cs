@@ -277,9 +277,7 @@ public class SimpleWindow : Window
         status.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.StatusText)));
         status.TextTrimming = TextTrimming.CharacterEllipsis;
         Avalonia.Automation.AutomationProperties.SetAutomationId(status, "Status");
-        var help = BrutalTheme.Label(strings.Help, 10);
-        help.Opacity = 0.7;
-        help.TextWrapping = TextWrapping.Wrap;
+        var help = ShortcutList(strings.Shortcuts);
 
         var root = new Grid
         {
@@ -511,6 +509,38 @@ public class SimpleWindow : Window
         {
             await _vm.OpenFolderAsync(path);
         }
+    }
+
+    /// <summary>The shortcuts as a list in three columns: the keys in a box, then what they do.</summary>
+    private static Control ShortcutList((string Keys, string What)[] shortcuts)
+    {
+        var mod = OperatingSystem.IsMacOS() ? "Cmd" : "Ctrl";
+        var grid = new Avalonia.Controls.Primitives.UniformGrid { Columns = 3, Margin = new Thickness(0, 2, 0, 0) };
+        foreach (var (keys, what) in shortcuts)
+        {
+            var key = new Border
+            {
+                BorderBrush = BrutalTheme.Ink,
+                BorderThickness = new Thickness(1),
+                Background = BrutalTheme.Paper,
+                Padding = new Thickness(5, 1),
+                Margin = new Thickness(0, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = BrutalTheme.Label(keys.Replace("Mod", mod), 10),
+            };
+            var text = BrutalTheme.Label(what.Replace("Mod", mod), 11);
+            text.FontWeight = FontWeight.Normal;
+            text.TextTrimming = TextTrimming.CharacterEllipsis;
+            grid.Children.Add(new DockPanel
+            {
+                Margin = new Thickness(0, 2, 12, 2),
+                Children = { key, text },
+            });
+            DockPanel.SetDock(key, Dock.Left);
+        }
+
+        Avalonia.Automation.AutomationProperties.SetAutomationId(grid, "Shortcuts");
+        return grid;
     }
 
     private Button NudgeButton(string text, double seconds, string id)

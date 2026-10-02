@@ -40,7 +40,8 @@ public sealed class SimpleStrings
     public required string CouldNotLoadSubtitle { get; init; }
     public required string ImageTracksSkipped { get; init; }
     public required string AdvancedMode { get; init; }
-    public required string Help { get; init; }
+    /// <summary>Keyboard and mouse shortcuts: (keys, what they do). "Mod" is Cmd on macOS, Ctrl elsewhere.</summary>
+    public required (string Keys, string What)[] Shortcuts { get; init; }
     public required string UnsavedChanges { get; init; }
     public required string NoVideoPlayer { get; init; }
     public required string LinesCount { get; init; }
@@ -106,7 +107,19 @@ public sealed class SimpleStrings
         CouldNotLoadSubtitle = "Could not read this subtitle.",
         ImageTracksSkipped = "Image subtitles (PGS/VobSub) need OCR: use the advanced mode.",
         AdvancedMode = "ADVANCED MODE",
-        Help = "PgUp/PgDn prev/next video · SPACE play/pause · ← → seek 1s · , . offset ∓0.1s · < > offset ∓1s · + − zoom · Ctrl+S save · drag the yellow lane to move the subtitle · Cmd/Ctrl + click/drag moves the red cursor",
+        Shortcuts =
+        [
+            ("SPACE", "play / pause"),
+            ("← →", "back / forward 1 s"),
+            ("PgUp PgDn", "previous / next video"),
+            (", .", "offset −0.1 s / +0.1 s"),
+            ("< >", "offset −1 s / +1 s"),
+            ("+ −", "zoom in / out"),
+            ("Mod+S", "save"),
+            ("drag yellow lane", "move the whole subtitle"),
+            ("Mod + click/drag", "move the red cursor"),
+            ("wheel", "scroll · Mod+wheel zooms"),
+        ],
         UnsavedChanges = "unsaved",
         NoVideoPlayer = "Video player not found. Install mpv (see README).",
         LinesCount = "{0} · {1} lines",
@@ -173,7 +186,19 @@ public sealed class SimpleStrings
         CouldNotLoadSubtitle = "Não deu para ler essa legenda.",
         ImageTracksSkipped = "Legendas de imagem (PGS/VobSub) precisam de OCR: use o modo avançado.",
         AdvancedMode = "MODO AVANÇADO",
-        Help = "PgUp/PgDn vídeo anterior/próximo · ESPAÇO toca/pausa · ← → pula 1s · , . offset ∓0,1s · < > offset ∓1s · + − zoom · Ctrl+S salva · arraste a faixa amarela para mover a legenda · Cmd/Ctrl + clique/arraste move o cursor vermelho",
+        Shortcuts =
+        [
+            ("ESPAÇO", "toca / pausa"),
+            ("← →", "volta / avança 1 s"),
+            ("PgUp PgDn", "vídeo anterior / próximo"),
+            (", .", "offset −0,1 s / +0,1 s"),
+            ("< >", "offset −1 s / +1 s"),
+            ("+ −", "aproxima / afasta"),
+            ("Mod+S", "salva"),
+            ("arraste a faixa amarela", "move a legenda inteira"),
+            ("Mod + clique/arraste", "move o cursor vermelho"),
+            ("rodinha", "rola · Mod+rodinha dá zoom"),
+        ],
         UnsavedChanges = "não salvo",
         NoVideoPlayer = "Player de vídeo não encontrado. Instale o mpv (veja o README).",
         LinesCount = "{0} · {1} falas",
