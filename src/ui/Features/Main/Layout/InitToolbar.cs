@@ -47,6 +47,18 @@ public static class InitToolbar
         var languageHints = Se.Language.Main.Toolbar;
         var shortcuts = ShortcutsMain.GetUsedShortcuts(vm);
 
+        // Simple Subtitle Edit: always offer the way back, whatever the toolbar settings hide.
+        var backToSimple = new Button
+        {
+            Content = Nikse.SubtitleEdit.Features.Simple.SimpleStrings.Current.BackToSimple,
+            FontWeight = FontWeight.Bold,
+            Margin = new Thickness(0, 0, 6, 0),
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+            [AutomationProperties.AutomationIdProperty] = "BackToSimple",
+        };
+        backToSimple.Click += (_, _) => Nikse.SubtitleEdit.Features.Simple.SimpleModeSwitch.BackToSimple(vm.Window);
+        stackPanelLeft.Children.Add(backToSimple);
+
         if (appearance.ToolbarShowFileNew)
         {
             var shortcut = shortcuts.FirstOrDefault(s => s.Name == nameof(vm.CommandFileNewCommand));

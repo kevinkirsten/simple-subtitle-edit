@@ -72,7 +72,7 @@ public static class MainWindowFactory
         window.Closed += (_, _) =>
         {
             _openMainWindows--;
-            if (_openMainWindows <= 0)
+            if (_openMainWindows <= 0 && !Nikse.SubtitleEdit.Features.Simple.SimpleModeSwitch.TryReturnToSimple())
             {
                 Environment.Exit(0);
             }
@@ -82,10 +82,14 @@ public static class MainWindowFactory
     }
 
     /// <summary>File &gt; New window: opens another independent editor window.</summary>
-    public static void OpenNewWindow()
+    public static void OpenNewWindow() => OpenEditorWindow();
+
+    /// <summary>Opens an editor window and returns it.</summary>
+    public static Window OpenEditorWindow()
     {
         var window = Create(isPrimary: false);
         window.Show();
+        return window;
     }
 
     /// <summary>

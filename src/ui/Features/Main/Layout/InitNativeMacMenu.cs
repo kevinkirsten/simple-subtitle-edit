@@ -180,6 +180,9 @@ public static class InitNativeMacMenu
 
         // ── File ──────────────────────────────────────────────────────────────
         var fileItems = new NativeMenu();
+        fileItems.Items.Add(WindowActionItem(Nikse.SubtitleEdit.Features.Simple.SimpleStrings.Current.BackToSimple, state,
+            null, Nikse.SubtitleEdit.Features.Simple.SimpleModeSwitch.BackToSimple));
+        fileItems.Items.Add(new NativeMenuItemSeparator());
         fileItems.Items.Add(Item(Clean(l.New), v => v.CommandFileNewCommand));
         fileItems.Items.Add(Conditional(Clean(l.NewKeepVideo), v => v.CommandFileNewKeepVideoCommand,
             v => v.IsVideoLoaded, nameof(MainViewModel.IsVideoLoaded)));

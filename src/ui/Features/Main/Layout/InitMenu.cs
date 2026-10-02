@@ -59,6 +59,8 @@ public static class InitMenu
             Header = l.File,
             Items =
             {
+                MakeBackToSimpleItem(vm),
+                new Separator(),
                 new MenuItem
                 {
                     Header = l.New,
@@ -1325,5 +1327,12 @@ public static class InitMenu
         }
 
         return new KeyGesture(keyValue.Value, modifiers);
+    }
+
+    private static MenuItem MakeBackToSimpleItem(MainViewModel vm)
+    {
+        var item = new MenuItem { Header = Nikse.SubtitleEdit.Features.Simple.SimpleStrings.Current.BackToSimple };
+        item.Click += (_, _) => Nikse.SubtitleEdit.Features.Simple.SimpleModeSwitch.BackToSimple(vm.Window);
+        return item;
     }
 }

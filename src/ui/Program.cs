@@ -582,7 +582,7 @@ namespace Nikse.SubtitleEdit
         }
 
         /// <summary>The simple sync window when the app started in simple mode (the default).</summary>
-        public static Nikse.SubtitleEdit.Features.Simple.SimpleWindow? SimpleWindowInstance { get; private set; }
+        public static Nikse.SubtitleEdit.Features.Simple.SimpleWindow? SimpleWindowInstance { get; set; }
 
         private static bool HasAdvancedArg(string[] args)
         {
@@ -608,11 +608,19 @@ namespace Nikse.SubtitleEdit
                 window.Opened += async (_, _) => await window.HandleDroppedFilesAsync(files);
             }
 
-            // Same guarantee as the editor windows (#12172): no invisible process after the last
-            // window closes. Editor windows opened from ADVANCED MODE keep the app alive.
+            HookSimpleWindowExit(lifetime, window);
+        }
+
+        /// <summary>
+        /// Same guarantee as the editor windows (#12172): no invisible process after the last
+        /// window closes. Editor windows opened from ADVANCED MODE keep the app alive.
+        /// </summary>
+        public static void HookSimpleWindowExit(ClassicDesktopStyleApplicationLifetime? lifetime, Nikse.SubtitleEdit.Features.Simple.SimpleWindow window)
+        {
             window.Closed += (_, _) =>
             {
-                if (!lifetime.Windows.Any(w => w != window && w.IsVisible))
+                lifetime ??= Application.Current?.ApplicationLifetime as ClassicDesktopStyleApplicationLifetime;
+                if (lifetime == null || !lifetime.Windows.Any(w => w != window && w.IsVisible))
                 {
                     Environment.Exit(0);
                 }

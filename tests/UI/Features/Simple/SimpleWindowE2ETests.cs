@@ -177,6 +177,68 @@ public sealed class SimpleWindowE2ETests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task Scrubbing_PausesSendsOneSeekAtATime_AndResumes()
+    {
+        var (window, player) = await OpenAsync();
+        player.SupportsPlaybackRestartEvents = true;
+        player.Play();
+        var timeline = window.Timeline;
+        var y = 40.0;
+        var modifier = OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control;
+        Point At(double seconds) => timeline.TranslatePoint(new Point(timeline.SecondsToX(seconds), y), window)!.Value;
+
+        window.MouseDown(At(2), MouseButton.Left, modifier);
+        Assert.False(player.IsPlaying); // paused while scrubbing
+        Assert.Equal([2.0], player.Seeks.Select(v => Math.Round(v, 1)));
+
+        // mpv is still busy with the first seek: moves only update the cursor.
+        for (var s = 2.5; s <= 6; s += 0.5)
+        {
+            window.MouseMove(At(s), modifier);
+            window.ViewModel.Tick();
+        }
+
+        Assert.Single(player.Seeks);
+        Assert.InRange(window.ViewModel.Position, 5.9, 6.1);
+
+        // The seek lands: the next tick sends the newest position, not each step in between.
+        player.SeekLanded = true;
+        window.ViewModel.Tick();
+        Assert.Equal([2.0, 6.0], player.Seeks.Select(v => Math.Round(v, 1)));
+
+        window.MouseMove(At(8), modifier);
+        window.MouseUp(At(9), MouseButton.Left, modifier);
+        Pump();
+
+        Assert.Equal(9.0, Math.Round(player.Seeks[^1], 1)); // the release position always goes out
+        Assert.True(player.IsPlaying); // was playing before: plays again
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task WhileASeekIsLanding_TheCursorDoesNotJumpBack()
+    {
+        var (window, player) = await OpenAsync();
+        player.SupportsPlaybackRestartEvents = true;
+        player.Play();
+        player.ReportedPositionWhileSeeking = 1.0; // mpv still says "1.0 s" until the seek lands
+
+        window.ViewModel.Seek(12);
+        for (var i = 0; i < 5; i++)
+        {
+            window.ViewModel.Tick();
+            Assert.Equal(12, window.ViewModel.Position);
+        }
+
+        player.SeekLanded = true;
+        player.Position = 12.04;
+        player.SeekLanded = true;
+        window.ViewModel.Tick();
+        Assert.Equal(12.04, window.ViewModel.Position, 3);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task DraggingTheAudioLane_ScrollsInsteadOfMovingTheSubtitle()
     {
         var (window, _) = await OpenAsync();

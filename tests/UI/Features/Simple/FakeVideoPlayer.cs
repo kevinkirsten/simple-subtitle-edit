@@ -1,5 +1,6 @@
 using Nikse.SubtitleEdit.Logic.VideoPlayers;
 using Nikse.SubtitleEdit.Logic.VideoPlayers.LibMpvDynamic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace UITests.Features.Simple;
@@ -19,7 +20,7 @@ public sealed class FakeVideoPlayer : IVideoPlayer
     public Task LoadFile(string fileName, double startPositionSeconds = 0)
     {
         FileName = fileName;
-        Position = startPositionSeconds;
+        _position = startPositionSeconds; // opening is not a seek
         return Task.CompletedTask;
     }
 
@@ -31,7 +32,35 @@ public sealed class FakeVideoPlayer : IVideoPlayer
     public AudioTrackInfo? ToggleAudioTrack() => null;
     public bool IsPlaying { get; private set; }
     public bool IsPaused => !IsPlaying;
-    public double Position { get; set; }
+    private double _position;
+
+    /// <summary>Every seek the window sent, in order.</summary>
+    public List<double> Seeks { get; } = [];
+
+    /// <summary>Like mpv: the window may wait for "seek landed" before sending the next one.</summary>
+    public bool SupportsPlaybackRestartEvents { get; set; }
+
+    /// <summary>With restart events on: whether the last seek has landed.</summary>
+    public bool SeekLanded { get; set; } = true;
+
+    /// <summary>What a still-seeking mpv reports: the old time, until the seek lands.</summary>
+    public double ReportedPositionWhileSeeking { get; set; } = -1;
+
+    public bool HasPlaybackRestartedSince(long stopwatchTimestamp) => SeekLanded;
+
+    public double Position
+    {
+        get => !SeekLanded && ReportedPositionWhileSeeking >= 0 ? ReportedPositionWhileSeeking : _position;
+        set
+        {
+            Seeks.Add(value);
+            _position = value;
+            if (SupportsPlaybackRestartEvents)
+            {
+                SeekLanded = false;
+            }
+        }
+    }
     public double Duration { get; }
     public int VolumeMaximum => 100;
     public double Volume { get; set; } = 100;

@@ -56,6 +56,7 @@ public sealed class SimpleStrings
     public required string DiscardAndGo { get; init; }
     public required string Cancel { get; init; }
     public required string FindOnline { get; init; }
+    public required string BackToSimple { get; init; }
     public required string OnlineSettingsTitle { get; init; }
     public required string OnlineApiKey { get; init; }
     public required string OnlineAppName { get; init; }
@@ -106,6 +107,7 @@ public sealed class SimpleStrings
         DiscardAndGo = "DISCARD",
         Cancel = "CANCEL",
         FindOnline = "FIND ONLINE",
+        BackToSimple = "◀ Simple mode",
         OnlineSettingsTitle = "OpenSubtitles.com",
         OnlineApiKey = "API KEY",
         OnlineAppName = "APP NAME",
@@ -157,6 +159,7 @@ public sealed class SimpleStrings
         DiscardAndGo = "DESCARTAR",
         Cancel = "CANCELAR",
         FindOnline = "BUSCAR ONLINE",
+        BackToSimple = "◀ Modo simples",
         OnlineSettingsTitle = "OpenSubtitles.com",
         OnlineApiKey = "CHAVE DE API",
         OnlineAppName = "NOME DO APP",

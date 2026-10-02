@@ -174,6 +174,9 @@ public class SimpleWindow : Window
         _minimap.Height = 46;
         _minimap.JumpRequested += s => _vm.CenterOn(s);
         _timeline.SeekRequested += s => _vm.Seek(s);
+        _timeline.ScrubStarted += s => _vm.BeginScrub(s);
+        _timeline.ScrubMoved += s => _vm.ScrubTo(s);
+        _timeline.ScrubEnded += s => _vm.EndScrub(s);
         _timeline.ViewStartChanged += s => _vm.SetViewStart(s);
         _timeline.OffsetDragged += s => _vm.SetOffset(s);
         _timeline.ZoomRequested += (f, a) => _vm.Zoom(f, a);
@@ -305,12 +308,15 @@ public class SimpleWindow : Window
         _timer.Start();
         Closed += (_, _) =>
         {
+            IsClosed = true;
             _timer.Stop();
             _videoPlayer?.CloseAndDisposePlayer();
         };
     }
 
     public SimpleViewModel ViewModel => _vm;
+
+    public bool IsClosed { get; private set; }
 
     public TimelineControl Timeline => _timeline;
 
@@ -555,7 +561,10 @@ public class SimpleWindow : Window
             }
         }
 
-        MainWindowFactory.OpenNewWindow();
+        // The editor takes over; closing it (or its SIMPLE MODE button) brings this window back.
+        _vm.PlayOrPauseIfPlaying();
+        Hide();
+        MainWindowFactory.OpenEditorWindow();
     }
 
     private async Task OfferLibMpvDownloadAsync()

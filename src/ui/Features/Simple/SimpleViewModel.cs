@@ -21,6 +21,14 @@ public partial class SimpleViewModel : ObservableObject
     private readonly IVideoPlayer? _player;
     private CancellationTokenSource? _waveformCancel;
     private bool _loadingSource;
+
+    // Scrubbing and seek bookkeeping (see BeginScrub/Tick).
+    private bool _scrubbing;
+    private bool _resumeAfterScrub;
+    private double? _pendingSeek;
+    private long _lastSeekIssued;
+    private double _seekTarget = -1;
+    private long _seekGuardUntil;
     private OpenSubtitlesClient? _onlineClient;
     private OpenSubtitlesSettings _onlineSettings = new();
     private static readonly System.Net.Http.HttpClient SharedHttp = new() { Timeout = TimeSpan.FromSeconds(30) };
@@ -374,13 +382,18 @@ public partial class SimpleViewModel : ObservableObject
 
     public void PlayOrPause() => _player?.PlayOrPause();
 
+    public void PlayOrPauseIfPlaying()
+    {
+        if (_player?.IsPlaying == true)
+        {
+            _player.Pause();
+        }
+    }
+
     public void Seek(double seconds)
     {
-        seconds = Math.Clamp(seconds, 0, Duration > 0 ? Duration : double.MaxValue);
-        if (_player != null)
-        {
-            _player.Position = seconds;
-        }
+        seconds = ClampToVideo(seconds);
+        IssueSeek(seconds);
 
         Position = seconds;
         EnsureVisible(seconds);
@@ -403,7 +416,23 @@ public partial class SimpleViewModel : ObservableObject
             Duration = _player.Duration;
         }
 
+        if (_scrubbing)
+        {
+            // The UI already shows where the mouse is; only feed mpv the newest target.
+            FlushPendingSeek();
+            return;
+        }
+
         var position = _player.Position;
+
+        // Until mpv has landed the last seek it still reports the old time; reading it then
+        // made the cursor and the picture jump back and forth.
+        if (_seekTarget >= 0 && Environment.TickCount64 < _seekGuardUntil && Math.Abs(position - _seekTarget) > 0.3)
+        {
+            return;
+        }
+
+        _seekTarget = -1;
         if (Math.Abs(position - Position) < 0.0005)
         {
             return;
@@ -418,6 +447,82 @@ public partial class SimpleViewModel : ObservableObject
         UpdateCurrentLine();
         RaiseRedraw();
     }
+
+    /// <summary>Cmd/Ctrl + press on the timeline: pause, and move the cursor with the mouse.</summary>
+    public void BeginScrub(double seconds)
+    {
+        _scrubbing = true;
+        _resumeAfterScrub = _player?.IsPlaying ?? false;
+        if (_resumeAfterScrub)
+        {
+            _player!.Pause();
+        }
+
+        ScrubTo(seconds);
+    }
+
+    public void ScrubTo(double seconds)
+    {
+        seconds = ClampToVideo(seconds);
+        Position = seconds;
+        _pendingSeek = seconds;
+        FlushPendingSeek();
+        UpdateCurrentLine();
+        RaiseRedraw();
+    }
+
+    public void EndScrub(double seconds)
+    {
+        ScrubTo(seconds);
+        _scrubbing = false;
+        if (_pendingSeek is { } last)
+        {
+            // The final position always reaches the player, even if a seek is still in flight.
+            _pendingSeek = null;
+            IssueSeek(last);
+        }
+
+        if (_resumeAfterScrub)
+        {
+            _player?.Play();
+        }
+    }
+
+    /// <summary>
+    /// One seek at a time: the next goes out only once mpv reports the previous one landed, and it
+    /// goes to the newest mouse position. Stacked seeks made mpv fall back to keyframe seeks, and
+    /// on long-GOP video (HEVC) the picture hopped between keyframes behind and ahead of the mouse.
+    /// </summary>
+    private void FlushPendingSeek()
+    {
+        if (_pendingSeek is not { } target || _player == null)
+        {
+            return;
+        }
+
+        var landed = _player.SupportsPlaybackRestartEvents
+            ? _player.HasPlaybackRestartedSince(_lastSeekIssued)
+            : System.Diagnostics.Stopwatch.GetElapsedTime(_lastSeekIssued).TotalMilliseconds > 80;
+        var stuck = System.Diagnostics.Stopwatch.GetElapsedTime(_lastSeekIssued).TotalMilliseconds > 400;
+        if (_lastSeekIssued == 0 || landed || stuck)
+        {
+            _pendingSeek = null;
+            IssueSeek(target);
+        }
+    }
+
+    private void IssueSeek(double seconds)
+    {
+        _lastSeekIssued = System.Diagnostics.Stopwatch.GetTimestamp();
+        _seekTarget = seconds;
+        _seekGuardUntil = Environment.TickCount64 + 1000;
+        if (_player != null)
+        {
+            _player.Position = seconds;
+        }
+    }
+
+    private double ClampToVideo(double seconds) => Math.Clamp(seconds, 0, Duration > 0 ? Duration : double.MaxValue);
 
     public void SetViewStart(double seconds)
     {

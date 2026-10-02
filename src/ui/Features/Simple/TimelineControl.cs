@@ -36,6 +36,9 @@ public class TimelineControl : Control
     public double Position { get; set; }
 
     public event Action<double>? SeekRequested;
+    public event Action<double>? ScrubStarted;
+    public event Action<double>? ScrubMoved;
+    public event Action<double>? ScrubEnded;
     public event Action<double>? ViewStartChanged;
     public event Action<double>? OffsetDragged;
     public event Action? OffsetDragFinished;
@@ -202,7 +205,7 @@ public class TimelineControl : Control
         {
             // Cmd (macOS) / Ctrl (Windows, Linux): the red cursor jumps here and follows the mouse.
             _dragMode = DragMode.Scrub;
-            SeekRequested?.Invoke(Math.Max(0, XToSeconds(point.X)));
+            ScrubStarted?.Invoke(Math.Max(0, XToSeconds(point.X)));
         }
         else
         {
@@ -226,7 +229,7 @@ public class TimelineControl : Control
         {
             _dragStarted = true;
             var x = Math.Clamp(e.GetPosition(this).X, 0, Bounds.Width);
-            SeekRequested?.Invoke(Math.Max(0, XToSeconds(x)));
+            ScrubMoved?.Invoke(Math.Max(0, XToSeconds(x)));
             return;
         }
 
@@ -255,7 +258,12 @@ public class TimelineControl : Control
             return;
         }
 
-        if (!_dragStarted && _dragMode != DragMode.Scrub)
+        if (_dragMode == DragMode.Scrub)
+        {
+            var x = Math.Clamp(e.GetPosition(this).X, 0, Bounds.Width);
+            ScrubEnded?.Invoke(Math.Max(0, XToSeconds(x)));
+        }
+        else if (!_dragStarted)
         {
             SeekRequested?.Invoke(Math.Max(0, XToSeconds(_pressPoint.X)));
         }
