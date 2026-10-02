@@ -34,10 +34,21 @@ public static class SubtitleSourceFinder
         }
 
         var videoBase = Path.GetFileNameWithoutExtension(videoFileName);
+
+        // In a season folder, "S01E02.srt" belongs to the S01E02 video: do not offer it for S01E01.
+        var otherVideos = Directory.EnumerateFiles(folder)
+            .Where(f => Nikse.SubtitleEdit.Core.Common.Utilities.VideoFileExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
+            .Select(Path.GetFileNameWithoutExtension)
+            .OfType<string>()
+            .Where(b => !b.Equals(videoBase, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
         var files = Directory.EnumerateFiles(folder)
             .Where(f => SubtitleFileExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
             .Where(f => !Path.GetFileName(f).StartsWith("._", StringComparison.Ordinal)) // macOS metadata on exFAT
             .Where(f => !IsBigTextFile(f))
+            .Where(f => RankFor(Path.GetFileNameWithoutExtension(f), videoBase) < 2 ||
+                        !otherVideos.Any(other => Path.GetFileNameWithoutExtension(f).StartsWith(other, StringComparison.OrdinalIgnoreCase)))
             .Select(f => new
             {
                 File = f,

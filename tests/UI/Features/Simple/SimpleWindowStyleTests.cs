@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Nikse.SubtitleEdit.Features.Simple;
 using System.Linq;
@@ -94,6 +95,66 @@ public class SimpleWindowStyleTests
             var name = combo.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Demo S01E01.srt");
             Assert.True(combo.IsPointerOver);
             Assert.Equal(((ISolidColorBrush)BrutalTheme.Ink).Color, ((ISolidColorBrush)name.Foreground!).Color);
+            window.Close();
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public void OnlineSettings_FocusedFieldStaysLightWithDarkText()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var dialog = new OnlineSettingsDialog(new Nikse.SubtitleEdit.UiLogic.SimpleSync.OpenSubtitlesSettings { Username = "quitolice" });
+        dialog.Show();
+        Pump();
+        var box = dialog.GetVisualDescendants().OfType<TextBox>().First(t => Avalonia.Automation.AutomationProperties.GetAutomationId(t) == "OnlineUsername");
+
+        box.Focus();
+        var center = box.TranslatePoint(new Point(box.Bounds.Width / 2, box.Bounds.Height / 2), dialog)!.Value;
+        dialog.MouseMove(center);
+        Pump();
+
+        var border = box.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_BorderElement");
+        Assert.True(box.IsFocused);
+        Assert.Equal(((ISolidColorBrush)BrutalTheme.Paper).Color, ((ISolidColorBrush)border.Background!).Color);
+        Assert.Equal(((ISolidColorBrush)BrutalTheme.Ink).Color, ((ISolidColorBrush)box.Foreground!).Color);
+        dialog.Close();
+    }
+
+    [AvaloniaFact]
+    public async System.Threading.Tasks.Task SubtitlePicker_SelectedEntryIsLightBlue_HoveredIsYellow()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var dir = System.IO.Directory.CreateTempSubdirectory("sse-style-");
+        try
+        {
+            var video = System.IO.Path.Combine(dir.FullName, "ep.mkv");
+            System.IO.File.WriteAllBytes(video, [0]);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir.FullName, "ep.srt"), "1\n00:00:01,000 --> 00:00:02,000\nA\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir.FullName, "ep.en.srt"), "1\n00:00:01,000 --> 00:00:02,000\nB\n");
+            var window = new SimpleWindow(createPlayer: false, new FakeVideoPlayer()) { Width = 1200, Height = 860 };
+            window.Show();
+            await window.OpenVideoAsync(video);
+            Pump();
+            var combo = window.GetVisualDescendants().OfType<ComboBox>().Single();
+            combo.IsDropDownOpen = true;
+            Pump();
+
+            var items = combo.GetLogicalDescendants().OfType<ComboBoxItem>().ToList();
+            var selected = items.Single(i => i.IsSelected);
+            var presenter = selected.GetVisualDescendants().OfType<ContentPresenter>().First(p => p.Name == "PART_ContentPresenter");
+            Assert.Equal(((ISolidColorBrush)BrutalTheme.Selected).Color, ((ISolidColorBrush)presenter.Background!).Color);
+
+            // The drop-down lives in its own popup window: move the mouse there.
+            var popup = TopLevel.GetTopLevel(selected)!;
+            popup.MouseMove(selected.TranslatePoint(new Point(20, selected.Bounds.Height / 2), popup)!.Value);
+            Pump();
+            Assert.True(selected.IsPointerOver);
+            Assert.Equal(((ISolidColorBrush)BrutalTheme.Marker).Color, ((ISolidColorBrush)presenter.Background!).Color);
+            combo.IsDropDownOpen = false;
             window.Close();
         }
         finally

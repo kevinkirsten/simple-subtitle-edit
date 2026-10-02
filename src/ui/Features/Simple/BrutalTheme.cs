@@ -21,6 +21,8 @@ public static class BrutalTheme
     public static readonly IBrush Cursor = new SolidColorBrush(Color.Parse("#E5322D"));
     public static readonly IBrush Viewport = new SolidColorBrush(Color.Parse("#330057FF"));
     public static readonly IBrush Muted = new SolidColorBrush(Color.Parse("#9A9A94"));
+    public static readonly IBrush Selected = new SolidColorBrush(Color.Parse("#D6E8FF"));
+    public static readonly IBrush Focus = new SolidColorBrush(Color.Parse("#0057FF"));
     public static readonly IPen InkPen = new Pen(Ink, 2);
     public static readonly IPen ThinInkPen = new Pen(Ink, 1);
     public static readonly IPen CursorPen = new Pen(Cursor, 2);
@@ -71,12 +73,40 @@ public static class BrutalTheme
             {
                 Setters = { new Setter(ContentPresenter.BackgroundProperty, Marker), new Setter(ContentPresenter.ForegroundProperty, Ink) },
             },
+            // The subtitle in use: light blue; hovering it still turns it yellow like the others.
             new Style(x => x.OfType<ComboBoxItem>().Class(":selected").Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"))
             {
-                Setters = { new Setter(ContentPresenter.BackgroundProperty, PaperDim), new Setter(ContentPresenter.ForegroundProperty, Ink) },
+                Setters = { new Setter(ContentPresenter.BackgroundProperty, Selected), new Setter(ContentPresenter.ForegroundProperty, Ink) },
+            },
+            new Style(x => x.OfType<ComboBoxItem>().Class(":selected").Class(":pointerover").Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"))
+            {
+                Setters = { new Setter(ContentPresenter.BackgroundProperty, Marker), new Setter(ContentPresenter.ForegroundProperty, Ink) },
+            },
+
+            // Text fields: the Fluent theme turns the box dark while focused or hovered, with dark text on it.
+            TextBoxState(x => x.Class(":pointerover"), Paper, Ink),
+            TextBoxState(x => x.Class(":focus"), Paper, Focus),
+            new Style(x => x.OfType<TextBox>().Class(":focus"))
+            {
+                Setters = { new Setter(TextBox.ForegroundProperty, Ink), new Setter(TextBox.CaretBrushProperty, Ink) },
+            },
+            new Style(x => x.OfType<TextBox>().Class(":pointerover"))
+            {
+                Setters = { new Setter(TextBox.ForegroundProperty, Ink) },
             },
         };
     }
+
+    private static Style TextBoxState(Func<Selector?, Selector> state, IBrush background, IBrush border) => new(x =>
+        state(x.OfType<TextBox>()).Template().OfType<Border>().Name("PART_BorderElement"))
+    {
+        Setters =
+        {
+            new Setter(Border.BackgroundProperty, background),
+            new Setter(Border.BorderBrushProperty, border),
+            new Setter(Border.BorderThicknessProperty, Line),
+        },
+    };
 
     public static readonly Cursor Hand = new(StandardCursorType.Hand);
 

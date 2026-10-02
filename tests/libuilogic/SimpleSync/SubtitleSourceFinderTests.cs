@@ -41,6 +41,30 @@ public class SubtitleSourceFinderTests
     }
 
     [Fact]
+    public void FindFiles_SkipsSubtitlesOfOtherVideosInTheSameFolder()
+    {
+        var dir = Directory.CreateTempSubdirectory("sse-find-");
+        try
+        {
+            var video = Path.Combine(dir.FullName, "Show - S01E01.mkv");
+            File.WriteAllText(video, "");
+            File.WriteAllText(Path.Combine(dir.FullName, "Show - S01E02.mkv"), "");
+            File.WriteAllText(Path.Combine(dir.FullName, "Show - S01E01.srt"), Srt);
+            File.WriteAllText(Path.Combine(dir.FullName, "Show - S01E02.srt"), Srt);
+            File.WriteAllText(Path.Combine(dir.FullName, "Show - S01E02.pt-BR.srt"), Srt);
+            File.WriteAllText(Path.Combine(dir.FullName, "loose.srt"), Srt);
+
+            var names = SubtitleSourceFinder.FindFiles(video).Select(s => s.DisplayName).ToList();
+
+            Assert.Equal(["Show - S01E01.srt", "loose.srt"], names);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
     public void FindFiles_MissingFolder_ReturnsEmpty()
     {
         Assert.Empty(SubtitleSourceFinder.FindFiles(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "x.mkv")));

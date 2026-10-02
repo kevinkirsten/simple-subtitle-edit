@@ -236,6 +236,8 @@ public class SimpleWindow : Window
         findOnline.Click += async (_, _) => await FindOnlineAsync();
         findOnline.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.HasVideo)));
         var onlineSettings = BrutalTheme.Button("⚙", "OnlineSettings");
+        onlineSettings.FontSize = 22;
+        onlineSettings.Padding = new Thickness(12, 0);
         ToolTip.SetTip(onlineSettings, strings.OnlineSettingsTitle);
         onlineSettings.Click += async (_, _) => await EditOnlineSettingsAsync();
         var otherFile = BrutalTheme.Button(strings.OpenSubtitle, "OpenSubtitle");
