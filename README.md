@@ -61,17 +61,28 @@ Then Plex is told to reload the video, so the new subtitle is on the TV a few se
 
 ## Install
 
-> No ready-made downloads yet; until there are, run it from source (below).
+**[Download the latest release](https://github.com/kevinkirsten/simple-subtitle-edit/releases/latest)**
 
-The app needs three free programs:
+| System | File | What to do |
+|---|---|---|
+| **macOS** | `…macOS-Apple-Silicon.dmg` (M1–M5) or `…macOS-Intel.dmg` | Open it, drag the app to Applications. First time: right-click the app › **Open** › **Open** |
+| **Windows** | `…Windows-x64-Setup.exe` (most PCs) or `…Windows-arm64-Setup.exe` | Run it. On "Windows protected your PC": **More info** › **Run anyway** |
+| **Ubuntu / Debian** | `simple-subtitle-edit_…_amd64.deb` (or `_arm64`) | `sudo apt install ./simple-subtitle-edit_*.deb` |
+| **Fedora** | `simple-subtitle-edit-….x86_64.rpm` (or `.aarch64`) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
 
-| | macOS ([Homebrew](https://brew.sh)) | Ubuntu / Debian | Windows |
-|---|---|---|---|
-| **mpv**: plays the video | `brew install mpv` | `sudo apt install libmpv2` | offered on first start |
-| **ffmpeg**: reads the audio | `brew install ffmpeg` | `sudo apt install ffmpeg` | `winget install ffmpeg` |
-| **MKVToolNix**: saves inside mkv | `brew install mkvtoolnix` | `sudo apt install mkvtoolnix` | `winget install MKVToolNix.MKVToolNix` |
+On macOS and Windows everything it needs (video player, ffmpeg, mkvmerge) is inside the app.
+On Linux the package installs mpv, ffmpeg and MKVToolNix with it.
 
-Then, with the [.NET 10 SDK](https://dotnet.microsoft.com/download):
+The system asks once on the first open because the app is not signed with a paid certificate.
+On recent macOS, if right-click › Open shows no Open button: System Settings › Privacy &
+Security › **Open Anyway**.
+
+<details>
+<summary>Run from source</summary>
+
+Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download), plus **mpv**, **ffmpeg** and
+**MKVToolNix** installed (`brew install mpv ffmpeg mkvtoolnix`, or
+`sudo apt install libmpv2 ffmpeg mkvtoolnix`).
 
 ```bash
 git clone https://github.com/kevinkirsten/simple-subtitle-edit.git
@@ -80,6 +91,8 @@ dotnet run --project src/ui/UI.csproj -c Release
 ```
 
 To open a video or a folder directly: `dotnet run --project src/ui/UI.csproj -c Release -- "/path/to/video.mkv"`.
+
+</details>
 
 ## Keyboard and mouse
 
@@ -121,6 +134,10 @@ dotnet test tests/UI/UITests.csproj --filter "FullyQualifiedName~Features.Simple
 ./scripts/make-screenshots.sh   # docs/images/simple/*.png
 ./scripts/make-gifs.sh          # docs/images/simple/*.gif
 ```
+
+Installers are built by the **Release Simple Subtitle Edit** workflow (Actions tab, run by hand):
+`installer/simple/macos/make-dmg.sh`, `installer/simple/windows/SimpleSubtitleEdit.iss` and
+`installer/simple/linux/make-packages.sh`.
 
 | Where | What |
 |---|---|
@@ -188,14 +205,18 @@ avisado e a legenda nova aparece na TV em segundos.
 
 ### Instalar
 
-Ainda não há instalador pronto. Instale o **mpv**, o **ffmpeg** e o **MKVToolNix** (tabela em
-[Install](#install)) e o [.NET 10 SDK](https://dotnet.microsoft.com/download), e rode:
+**[Baixe a versão mais recente](https://github.com/kevinkirsten/simple-subtitle-edit/releases/latest)**
 
-```bash
-git clone https://github.com/kevinkirsten/simple-subtitle-edit.git
-cd simple-subtitle-edit
-dotnet run --project src/ui/UI.csproj -c Release
-```
+- **macOS:** abra o `.dmg` (Apple Silicon para M1–M5, Intel para os outros) e arraste o app para
+  Applications. Na primeira vez: botão direito no app › **Open** › **Open**.
+- **Windows:** rode o `-Setup.exe` (x64 para a maioria dos PCs). No aviso "Windows protected your
+  PC": **More info** › **Run anyway**.
+- **Ubuntu / Debian:** `sudo apt install ./simple-subtitle-edit_*.deb`
+- **Fedora:** `sudo dnf install ./simple-subtitle-edit-*.rpm`
+
+No macOS e no Windows tudo que ele precisa (player, ffmpeg, mkvmerge) vem dentro do app; no Linux
+o pacote instala junto. O sistema pergunta uma vez na primeira abertura porque o app não tem
+assinatura paga.
 
 A interface aparece em português quando o sistema está em português. Atalhos e configurações
 (⚙: OpenSubtitles e Plex) estão nas seções em inglês acima.
