@@ -153,10 +153,14 @@ public class SimpleWindow : Window
 
         // --- transport + offset --------------------------------------------------------
         _playButton = BrutalTheme.Button("▶", "PlayPause");
+        // ▶ and ❚❚ have different widths: a fixed size keeps the bar from shifting on every toggle.
+        _playButton.Width = 56;
+        _playButton.Padding = new Thickness(0);
         _playButton.Click += (_, _) => _vm.PlayOrPause();
         var timeLabel = BrutalTheme.Label(string.Empty);
         timeLabel.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.TimeText)));
         timeLabel.Margin = new Thickness(10, 0);
+        timeLabel.MinWidth = 250; // "0:59:59.999 / 1:00:01.000" without pushing the offset controls
         Avalonia.Automation.AutomationProperties.SetAutomationId(timeLabel, "Time");
 
         var offsetLabel = BrutalTheme.Label(strings.Offset);

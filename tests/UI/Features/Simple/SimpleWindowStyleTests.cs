@@ -164,6 +164,38 @@ public class SimpleWindowStyleTests
     }
 
     [AvaloniaFact]
+    public async System.Threading.Tasks.Task PlayPause_TogglingDoesNotShiftTheBar()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var player = new FakeVideoPlayer();
+        var window = new SimpleWindow(createPlayer: false, player) { Width = 1200, Height = 860 };
+        window.Show();
+        Pump();
+        var play = window.GetVisualDescendants().OfType<Button>().First(b => Avalonia.Automation.AutomationProperties.GetAutomationId(b) == "PlayPause");
+        var offset = window.GetVisualDescendants().OfType<TextBlock>().First(t => Avalonia.Automation.AutomationProperties.GetAutomationId(t) == "OffsetValue");
+        var widthPlaying = 0.0;
+        var offsetXs = new System.Collections.Generic.List<double>();
+
+        foreach (var playing in new[] { false, true, false })
+        {
+            if (player.IsPlaying != playing)
+            {
+                player.PlayOrPause();
+            }
+
+            await System.Threading.Tasks.Task.Delay(150, TestContext.Current.CancellationToken); // the idle poll updates the glyph
+            Pump();
+            Assert.Equal(playing ? "❚❚" : "▶", play.Content);
+            widthPlaying = widthPlaying == 0 ? play.Bounds.Width : widthPlaying;
+            Assert.Equal(widthPlaying, play.Bounds.Width);
+            offsetXs.Add(offset.TranslatePoint(new Point(0, 0), window)!.Value.X);
+        }
+
+        Assert.Single(offsetXs.Distinct());
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void UnsavedDialog_ButtonsStayReadableOnHover()
     {
         SimpleStrings.Current = SimpleStrings.English;
