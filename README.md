@@ -1,79 +1,77 @@
 # Simple Subtitle Edit
 
-Fix subtitles that are out of sync, without learning a subtitle editor.
+**Fix out-of-sync subtitles in a few clicks, for good, on every screen.**
 
-Open a video, see where the speech is and where the subtitle lines are, slide the subtitle
-until they match, and save. The fixed `.srt` goes next to the video with the video's name, so
-Plex, VLC, mpv and smart TVs pick it up on their own.
+Plex lets you shift a subtitle's timing in the web player, but that fix stays in that browser:
+the phone app, the TV and the console still show the subtitle early or late. Simple Subtitle
+Edit fixes the subtitle itself, the file next to the video or the track inside it, so every
+player gets it right.
 
-![Simple Subtitle Edit with a video open, a subtitle 1.5 s late being fixed](docs/images/simple/main-en.png)
+![Dragging the yellow subtitle blocks onto the green speech, then playing](docs/images/simple/sync.gif)
 
 [Leia em português](#português)
 
-## What you see
+---
 
-| Part | What it does |
-|---|---|
-| **OPEN FOLDER** · **◀ PREV** · **NEXT ▶** | Open a whole series folder (season subfolders included) and go episode by episode. Each episode brings its subtitle along. If you changed the offset and did not save, it asks before moving on. |
-| **Video** | Plays any video ffmpeg/mpv can open: mkv, mp4, avi, HEVC 10-bit, AV1… The current subtitle line is shown under the picture. |
-| **WHOLE VIDEO** | The entire video in one bar. Green is the audio, **yellow marks where there is subtitle text**. Gaps in yellow = parts with no subtitle. The blue box is the part shown below; click or drag to jump. |
-| **AUDIO** | Zoomed waveform. Speech shows up as green blocks. |
-| **TEXT** | Each subtitle line as a yellow block, under the audio it belongs to. When the blocks do not line up with the speech, the subtitle is out of sync. |
-| **OFFSET** | Moves the whole subtitle earlier (−) or later (+). |
-| **SUBTITLE** | Every subtitle for this video, tagged by where it came from: **LOCAL** (a file next to the video, listed first) or **IN VIDEO** (a text track inside the mkv/mp4). Pick another one to compare. |
-| **FIND ONLINE** · **⚙** | Searches [OpenSubtitles.com](https://www.opensubtitles.com) for this video (by file hash and by name, season and episode) and adds the results to SUBTITLE tagged **ONLINE**, exact-file matches first. A subtitle is only downloaded when you pick it, and each one is downloaded once. ⚙ holds your API key and login (stored on your computer only). |
-| **SAVE** | Writes `video-name.srt` next to the video. Lines that would start after the video ends are dropped. If that file already exists, the old one is kept as `video-name.srt.bak`. |
+## How it works
 
-## How to fix a subtitle in 4 steps
+### 1. Line the subtitle up with the speech
 
-1. **Drag the video (or the whole series folder) into the window**, or click **OPEN VIDEO** / **OPEN FOLDER**. The subtitles next to it are
-   loaded; the one named like the video comes first.
-2. **Find a line of speech** in the AUDIO lane and look at the yellow block under it.
-   - Block starts **after** the speech → the subtitle is late → press **−0.1** / **−1s**.
-   - Block starts **before** the speech → the subtitle is early → press **+0.1** / **+1s**.
-   - Or just **drag the yellow lane** sideways until the blocks sit under the speech.
-   - No subtitle, or a bad one? **FIND ONLINE**, pick an ONLINE entry, check it.
-3. **Check another part of the video**: click further along the WHOLE VIDEO bar. If the
-   blocks match at the start but drift apart near the end, this subtitle was made for a
-   different cut or frame rate. Pick another one in **SUBTITLE**, or use
-   **ADVANCED MODE → Synchronization → Change frame rate**.
-4. **SAVE**.
+Open a video. The green blocks are the speech in the audio; the yellow blocks are the subtitle
+lines. When they don't line up, **drag the yellow lane** until they do, or use **−1s −0.1 +0.1 +1s**.
+Press play to check: the current line shows under the video.
 
-![Empty window: drop a video here](docs/images/simple/empty-en.png)
+The **WHOLE VIDEO** bar shows the entire episode: the yellow marks are where there is subtitle
+text, the gaps are parts without any. Click anywhere on it to jump there.
 
-![Saving inside the video: pick the language; it warns what is already inside](docs/images/simple/save-en.png)
+### 2. Go through a whole series
 
-## Keyboard
+![Dropping a series folder and going to the next episode](docs/images/simple/folder.gif)
 
-| Key | Action |
-|---|---|
-| `PgUp` `PgDn` | Previous / next video |
-| `Space` | Play / pause |
-| `←` `→` | Back / forward 1 second |
-| `,` `.` | Offset −0.1 s / +0.1 s |
-| `<` `>` (Shift + `,` `.`) | Offset −1 s / +1 s |
-| `+` `−` | Zoom in / out |
-| `Ctrl+S` / `Cmd+S` | Save |
-| Mouse wheel on the timeline | Scroll; with `Ctrl`/`Cmd`, zoom |
-| `Cmd` (macOS) / `Ctrl` + click or drag on the timeline | Move the red playback cursor there |
+Drop the series folder (season folders included) or click **OPEN FOLDER**. **NEXT ▶** and
+**◀ PREV** walk the episodes in order, and each one brings its own subtitle. If you changed one
+and didn't save, it asks before moving on.
+
+### 3. Wrong subtitle? Find another one online
+
+![FIND ONLINE lists OpenSubtitles results; picking one loads it](docs/images/simple/online.gif)
+
+**FIND ONLINE** searches [OpenSubtitles.com](https://www.opensubtitles.com) for this exact video
+file (by its hash) and by name, season and episode. Results are tagged **ONLINE**; the ones made
+for your exact file say **✓ hash**. A subtitle is downloaded only when you pick it, and only once.
+
+If a subtitle matches at the start but drifts apart later, it was made for another cut of the
+episode: no offset will fix it. Pick another one.
+
+### 4. Save it inside the video, and Plex picks it up
+
+![SAVE: choose the language; a progress bar while the mkv is rewritten](docs/images/simple/save.gif)
+
+**SAVE** asks where:
+
+- **Next to the video**: a `.srt` with the video's name, which every player and Plex find.
+- **Inside the video** (mkv): a subtitle track in the language you choose, e.g. "Português
+  (Brasil)". It replaces the previous track in that language and keeps the others. You'll see
+  what is already inside before saving. Next time, the track shows up tagged **IN VIDEO** and
+  you edit it the same way.
+
+Then Plex is told to reload the video, so the new subtitle is on the TV a few seconds later.
+
+---
 
 ## Install
 
-> There are no ready-made downloads yet. Until there are, build it from source (below).
+> No ready-made downloads yet; until there are, run it from source (below).
 
-The app needs two free programs: **mpv** (plays the video) and **ffmpeg** (reads the audio).
-Saving inside mkv files also needs **MKVToolNix** (`mkvmerge`).
+The app needs three free programs:
 
-| System | Install mpv and ffmpeg |
-|---|---|
-| **macOS** | `brew install mpv ffmpeg mkvtoolnix` ([Homebrew](https://brew.sh)) |
-| **Ubuntu / Debian** | `sudo apt install libmpv2 ffmpeg mkvtoolnix` |
-| **Fedora** | `sudo dnf install mpv-libs ffmpeg mkvtoolnix` |
-| **Windows** | mpv: the app offers to download it on first start. `winget install ffmpeg MKVToolNix.MKVToolNix` |
+| | macOS ([Homebrew](https://brew.sh)) | Ubuntu / Debian | Windows |
+|---|---|---|---|
+| **mpv**: plays the video | `brew install mpv` | `sudo apt install libmpv2` | offered on first start |
+| **ffmpeg**: reads the audio | `brew install ffmpeg` | `sudo apt install ffmpeg` | `winget install ffmpeg` |
+| **MKVToolNix**: saves inside mkv | `brew install mkvtoolnix` | `sudo apt install mkvtoolnix` | `winget install MKVToolNix.MKVToolNix` |
 
-### Build from source
-
-Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+Then, with the [.NET 10 SDK](https://dotnet.microsoft.com/download):
 
 ```bash
 git clone https://github.com/kevinkirsten/simple-subtitle-edit.git
@@ -81,98 +79,117 @@ cd simple-subtitle-edit
 dotnet run --project src/ui/UI.csproj -c Release
 ```
 
-Open a video directly: `dotnet run --project src/ui/UI.csproj -c Release -- "/path/to/video.mkv"`.
+To open a video or a folder directly: `dotnet run --project src/ui/UI.csproj -c Release -- "/path/to/video.mkv"`.
+
+## Keyboard and mouse
+
+| | |
+|---|---|
+| `Space` | play / pause |
+| `←` `→` | back / forward 1 second |
+| `PgUp` `PgDn` | previous / next video |
+| `,` `.` | offset −0.1 s / +0.1 s |
+| `<` `>` | offset −1 s / +1 s |
+| `+` `−` | zoom in / out |
+| `Cmd+S` / `Ctrl+S` | save |
+| drag the yellow lane | move the whole subtitle |
+| `Cmd` / `Ctrl` + click or drag on the timeline | move the red playback cursor |
+| mouse wheel on the timeline | scroll; with `Cmd` / `Ctrl`, zoom |
+
+## Settings (⚙)
+
+- **OpenSubtitles.com**: needs a free account and an API key (Profile › API consumers).
+  Searching uses only the key; downloading uses your login and counts against your daily limit.
+- **Plex**: **SIGN IN WITH PLEX** works with any server (this computer, a NAS, Docker): approve
+  it in the browser and your server is picked. **DETECT** finds a Plex on this computer. Videos
+  are matched by folder and file name, so it works when Plex sees them under a different path.
+  Without Plex, everything else works the same.
+
+Your keys and logins are stored only on your computer.
 
 ## Advanced mode
 
-Everything from the original Subtitle Edit is still here: editing text, OCR of image
-subtitles (PGS/VobSub), speech-to-text, translation, 300+ formats. Click **ADVANCED MODE** in
-the window, or start the app with `--advanced`.
+Everything from Subtitle Edit is still here: editing text, OCR of image subtitles (PGS/VobSub),
+speech-to-text, translation, 300+ formats. Click **ADVANCED MODE**, or start with `--advanced`;
+**◀ Simple mode** in the editor brings you back.
 
 ## For developers
 
 ```bash
-dotnet test tests/libuilogic/LibUiLogicTests.csproj --filter "FullyQualifiedName~SimpleSync"   # unit tests
-dotnet test tests/UI/UITests.csproj --filter "FullyQualifiedName~Features.Simple"            # end-to-end (headless)
-./scripts/make-screenshots.sh                                                               # regenerate the README images
+dotnet test tests/libuilogic/LibUiLogicTests.csproj --filter "FullyQualifiedName~SimpleSync"   # logic
+dotnet test tests/UI/UITests.csproj --filter "FullyQualifiedName~Features.Simple"            # end to end, headless
+./scripts/make-screenshots.sh   # docs/images/simple/*.png
+./scripts/make-gifs.sh          # docs/images/simple/*.gif
 ```
 
 | Where | What |
 |---|---|
-| `src/libuilogic/SimpleSync/` | No UI: finding subtitles for a video, loading them, offset, coverage, saving |
-| `src/ui/Features/Simple/` | The simple window, timeline, overview bar, waveform extraction |
+| `src/libuilogic/SimpleSync/` | No UI: finding and loading subtitles, offset, saving, mkv tracks (mkvmerge), OpenSubtitles, Plex |
+| `src/ui/Features/Simple/` | The simple window, timeline, overview bar, dialogs |
 | `src/ui/Program.cs` | Starts the simple window; `--advanced` starts the full editor |
 
-The end-to-end tests drive a real window with real mouse and keyboard input through
-Avalonia's headless platform; only the native video player is replaced by a fake.
+The end-to-end tests drive a real window with real mouse and keyboard input through Avalonia's
+headless platform; only the video player, OpenSubtitles and Plex are replaced by fakes. The GIFs
+are recorded the same way, from demo clips made with ffmpeg.
 
 ## Credits and license
 
-Simple Subtitle Edit is a fork of [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
-by Nikolaj Olsson and contributors. The video player, waveform engine and subtitle formats
-are theirs. MIT License, see [LICENSE](LICENSE). The original README is in
-[README.upstream.md](README.upstream.md).
+A fork of [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit) by Nikolaj Olsson and
+contributors: the video player, the waveform engine and the subtitle formats are theirs. This
+fork adds the simple window on top. MIT License, see [LICENSE](LICENSE). The original README is
+in [README.upstream.md](README.upstream.md).
 
 ---
 
 ## Português
 
-Conserta legenda fora de sincronia sem precisar aprender um editor de legendas.
+**Conserte legendas fora de sincronia em poucos cliques, de vez, em todas as telas.**
 
-Abra o vídeo, veja onde estão as falas e onde estão as legendas, arraste a legenda até
-encaixar e salve. O `.srt` corrigido vai para a mesma pasta do vídeo, com o mesmo nome, e o
-Plex, o VLC, o mpv e as TVs encontram sozinhos.
+O Plex deixa ajustar o tempo da legenda no player do navegador, mas esse ajuste fica só ali: o
+app do celular, a TV e o console continuam mostrando a legenda adiantada ou atrasada. O Simple
+Subtitle Edit corrige a própria legenda, o arquivo ao lado do vídeo ou a faixa dentro dele, e
+aí todo player acerta.
 
-![Simple Subtitle Edit em português, com uma legenda atrasada sendo corrigida](docs/images/simple/main-pt.png)
+![Arrastando os blocos amarelos da legenda até as falas verdes e dando play](docs/images/simple/sync.gif)
 
-![Salvar dentro do vídeo: escolha o idioma; ele avisa o que já existe dentro](docs/images/simple/save-pt.png)
+### 1. Encaixe a legenda nas falas
 
-### Como usar
+Abra um vídeo. Os blocos verdes são as falas do áudio; os amarelos, as falas da legenda. Se não
+estiverem alinhados, **arraste a faixa amarela** até encaixar, ou use **−1s −0.1 +0.1 +1s**. Dê
+play para conferir: a fala atual aparece embaixo do vídeo. A barra **VÍDEO INTEIRO** mostra o
+episódio todo: o amarelo é onde há legenda e os buracos são trechos sem ela.
 
-1. **Arraste o vídeo, ou a pasta inteira da série, para a janela** (ou clique em **ABRIR
-   VÍDEO** / **ABRIR PASTA**). Com uma pasta, **◀ ANTERIOR** e **PRÓXIMO ▶** passam de episódio
-   em episódio, e a legenda vem junto. Em **LEGENDA**, cada uma aparece com a origem: **LOCAL**
-   (arquivo na pasta, vem primeiro) ou **NO VÍDEO** (faixa dentro do mkv/mp4).
-2. **Ache uma fala** na faixa ÁUDIO (os blocos verdes) e olhe o bloco amarelo embaixo dela.
-   - Bloco começa **depois** da fala → legenda atrasada → **−0.1** / **−1s**.
-   - Bloco começa **antes** da fala → legenda adiantada → **+0.1** / **+1s**.
-   - Ou **arraste a faixa amarela** para o lado até encaixar.
-3. **Confira outro trecho**: clique mais adiante na barra VÍDEO INTEIRO. Os trechos sem
-   amarelo são partes sem legenda. Se no começo encaixa e no fim desencaixa, a legenda é de
-   outra versão do vídeo: escolha outra em **LEGENDA**.
-   Sem legenda boa? **BUSCAR ONLINE** procura no OpenSubtitles.com (pelo arquivo exato e pelo
-   nome/temporada/episódio) e põe os resultados em LEGENDA com a etiqueta **ONLINE**. Só baixa
-   quando você escolhe uma, e cada uma só uma vez. A chave de API e o login ficam em **⚙**,
-   guardados só no seu computador.
-4. **SALVAR**. Num mkv, ele pergunta onde: **ao lado do vídeo** (`.srt` com o nome do vídeo; o
-   antigo vira `.srt.bak`) ou **dentro do vídeo**, como faixa de texto no **idioma que você
-   escolher** ("Português (Brasil)", `pt-BR`; ele lembra o último). Ele avisa qual faixa desse
-   idioma já existe e vai ser substituída, quais ficam, e apaga o `.srt`. Outros formatos de
-   vídeo salvam ao lado. As
-   legendas de imagem do arquivo ficam. Da próxima vez, essa faixa aparece como **NO VÍDEO** e a
-   edição volta para dentro do arquivo. Falas depois do fim do vídeo são cortadas, e o Plex é
-   avisado para recarregar o vídeo.
+### 2. Passe pela série inteira
 
-**Plex (⚙ › PLEX):** **ENTRAR COM PLEX** funciona com qualquer servidor (este computador, NAS,
-Docker): você autoriza no navegador e o servidor é escolhido sozinho. **DETECTAR** acha um Plex
-neste computador. O vídeo é encontrado pela pasta e pelo nome do arquivo, então funciona mesmo
-quando o Plex enxerga os arquivos em outro caminho.
+![Soltando a pasta da série e indo para o próximo episódio](docs/images/simple/folder.gif)
 
-| Tecla | Ação |
-|---|---|
-| `PgUp` `PgDn` | Vídeo anterior / próximo |
-| `Espaço` | Toca / pausa |
-| `←` `→` | Volta / avança 1 s |
-| `,` `.` | Offset −0,1 s / +0,1 s |
-| `<` `>` | Offset −1 s / +1 s |
-| `+` `−` | Zoom |
-| `Ctrl+S` / `Cmd+S` | Salvar |
-| `Cmd` (Mac) / `Ctrl` + clique ou arraste na linha do tempo | Leva o cursor vermelho até ali |
+Arraste a pasta da série (com as temporadas) ou clique em **ABRIR PASTA**. **PRÓXIMO ▶** e
+**◀ ANTERIOR** passam pelos episódios em ordem, e cada um traz a sua legenda. Se você mexeu e
+não salvou, ele pergunta antes de trocar.
+
+### 3. Legenda errada? Busque outra online
+
+![BUSCAR ONLINE lista resultados do OpenSubtitles; escolher um carrega a legenda](docs/images/simple/online.gif)
+
+**BUSCAR ONLINE** procura no OpenSubtitles.com pelo arquivo exato (hash) e pelo nome, temporada
+e episódio. Os resultados aparecem como **ONLINE**; os feitos para o seu arquivo exato mostram
+**✓ hash**. A legenda só é baixada quando você escolhe, e uma vez só. Se encaixa no começo e
+desencaixa depois, ela é de outra versão do episódio: troque por outra.
+
+### 4. Salve dentro do vídeo, e o Plex recarrega
+
+![SALVAR: escolha o idioma; barra de progresso enquanto o mkv é regravado](docs/images/simple/save.gif)
+
+**SALVAR** pergunta onde: **ao lado do vídeo** (um `.srt` com o nome do vídeo) ou **dentro do
+vídeo** (mkv), como faixa de legenda no idioma que você escolher, por exemplo "Português
+(Brasil)". Ele mostra antes o que já existe dentro, troca a faixa anterior desse idioma e mantém
+as outras. Da próxima vez, a faixa aparece como **NO VÍDEO** e você edita igual. Depois, o Plex é
+avisado e a legenda nova aparece na TV em segundos.
 
 ### Instalar
 
-Ainda não há instalador pronto. Por enquanto, instale o **mpv** e o **ffmpeg** (tabela em
-[Install](#install)), o [.NET 10 SDK](https://dotnet.microsoft.com/download) e rode:
+Ainda não há instalador pronto. Instale o **mpv**, o **ffmpeg** e o **MKVToolNix** (tabela em
+[Install](#install)) e o [.NET 10 SDK](https://dotnet.microsoft.com/download), e rode:
 
 ```bash
 git clone https://github.com/kevinkirsten/simple-subtitle-edit.git
@@ -180,4 +197,5 @@ cd simple-subtitle-edit
 dotnet run --project src/ui/UI.csproj -c Release
 ```
 
-A interface aparece em português quando o sistema está em português.
+A interface aparece em português quando o sistema está em português. Atalhos e configurações
+(⚙: OpenSubtitles e Plex) estão nas seções em inglês acima.
