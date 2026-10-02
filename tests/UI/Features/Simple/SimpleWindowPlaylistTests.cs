@@ -60,7 +60,10 @@ public sealed class SimpleWindowPlaylistTests : IDisposable
     private async Task<(SimpleWindow, FakeVideoPlayer)> OpenFolderAsync()
     {
         var player = new FakeVideoPlayer();
-        var window = new SimpleWindow(createPlayer: false, player);
+        var window = new SimpleWindow(createPlayer: false, player)
+        {
+            AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.SideFile),
+        };
         window.Show();
         await window.HandleDroppedFilesAsync([_root.FullName]);
         Pump();

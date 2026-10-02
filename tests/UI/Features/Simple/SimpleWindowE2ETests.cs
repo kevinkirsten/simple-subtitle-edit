@@ -57,7 +57,10 @@ public sealed class SimpleWindowE2ETests : IDisposable
     private async Task<(SimpleWindow Window, FakeVideoPlayer Player)> OpenAsync()
     {
         var player = new FakeVideoPlayer();
-        var window = new SimpleWindow(createPlayer: false, player);
+        var window = new SimpleWindow(createPlayer: false, player)
+        {
+            AskSaveDestination = (_, _) => Task.FromResult(SaveDestination.SideFile),
+        };
         window.Show();
         await window.OpenVideoAsync(_video);
         await window.ViewModel.WaveformLoading; // finishes (fails: not a real video) and repaints once

@@ -60,13 +60,14 @@ Plex, VLC, mpv and smart TVs pick it up on their own.
 > There are no ready-made downloads yet. Until there are, build it from source (below).
 
 The app needs two free programs: **mpv** (plays the video) and **ffmpeg** (reads the audio).
+Saving inside mkv files also needs **MKVToolNix** (`mkvmerge`).
 
 | System | Install mpv and ffmpeg |
 |---|---|
-| **macOS** | `brew install mpv ffmpeg` ([Homebrew](https://brew.sh)) |
-| **Ubuntu / Debian** | `sudo apt install libmpv2 ffmpeg` |
-| **Fedora** | `sudo dnf install mpv-libs ffmpeg` |
-| **Windows** | mpv: the app offers to download it on first start. ffmpeg: `winget install ffmpeg` |
+| **macOS** | `brew install mpv ffmpeg mkvtoolnix` ([Homebrew](https://brew.sh)) |
+| **Ubuntu / Debian** | `sudo apt install libmpv2 ffmpeg mkvtoolnix` |
+| **Fedora** | `sudo dnf install mpv-libs ffmpeg mkvtoolnix` |
+| **Windows** | mpv: the app offers to download it on first start. `winget install ffmpeg MKVToolNix.MKVToolNix` |
 
 ### Build from source
 
@@ -139,8 +140,12 @@ Plex, o VLC, o mpv e as TVs encontram sozinhos.
    nome/temporada/episódio) e põe os resultados em LEGENDA com a etiqueta **ONLINE**. Só baixa
    quando você escolhe uma, e cada uma só uma vez. A chave de API e o login ficam em **⚙**,
    guardados só no seu computador.
-4. **SALVAR**. Se já existir um `.srt` com o nome do vídeo, o antigo vira `.srt.bak`. Falas que
-   passariam do fim do vídeo são cortadas.
+4. **SALVAR**. Num mkv, ele pergunta onde: **ao lado do vídeo** (`.srt` com o nome do vídeo; o
+   antigo vira `.srt.bak`) ou **dentro do vídeo**, como faixa de texto no seu idioma
+   ("Português (Brasil)", `pt-BR`), trocando a anterior desse idioma e apagando o `.srt`. As
+   legendas de imagem do arquivo ficam. Da próxima vez, essa faixa aparece como **NO VÍDEO** e a
+   edição volta para dentro do arquivo. Falas depois do fim do vídeo são cortadas, e o Plex do
+   mesmo computador é avisado para recarregar.
 
 | Tecla | Ação |
 |---|---|

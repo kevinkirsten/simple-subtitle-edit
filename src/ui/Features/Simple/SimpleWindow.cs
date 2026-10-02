@@ -72,8 +72,13 @@ public class SimpleWindow : Window
 
         _vm = new SimpleViewModel(player);
         DataContext = _vm;
+        if (!createPlayer)
+        {
+            _vm.PlexRefresh = _ => Task.FromResult(false); // headless runs never talk to a real Plex
+        }
         AskLeave = () => UnsavedDialog.AskAsync(this);
         AskOnlineSettings = current => OnlineSettingsDialog.AskAsync(this, current);
+        AskSaveDestination = (track, insideIsDefault) => SaveChoiceDialog.AskAsync(this, track, insideIsDefault);
         if (createPlayer)
         {
             _vm.OnlineSettings = SimpleSettingsStore.Load();
@@ -251,7 +256,7 @@ public class SimpleWindow : Window
         var save = BrutalTheme.Button(strings.Save, "Save");
         save.Background = BrutalTheme.Marker;
         save.Classes.Add(BrutalTheme.PrimaryClass);
-        save.Click += (_, _) => SaveNow();
+        save.Click += async (_, _) => await SaveNowAsync();
         var subtitleRow = Row(new Control[] { subtitleLabel, combo, findOnline, onlineSettings, otherFile, save }, stretchIndex: 1);
 
         // --- status --------------------------------------------------------------------
@@ -277,6 +282,7 @@ public class SimpleWindow : Window
         AddRow(root, subtitleRow, 5);
         AddRow(root, status, 6);
         AddRow(root, help, 7);
+        root.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.IsIdle)));
         Content = root;
 
         _vm.Redraw += Redraw;
@@ -396,8 +402,7 @@ public class SimpleWindow : Window
         switch (await AskLeave())
         {
             case LeaveChoice.Save:
-                SaveNow();
-                return true;
+                return await SaveNowAsync();
             case LeaveChoice.Discard:
                 return true;
             default:
@@ -572,15 +577,32 @@ public class SimpleWindow : Window
         }
     }
 
-    private void SaveNow()
+    /// <summary>Asks where to save on an mkv (when mkvmerge is installed). Replaceable in tests.</summary>
+    public System.Func<string, bool, Task<SaveDestination>> AskSaveDestination { get; set; }
+
+    /// <returns>True when saved.</returns>
+    public async Task<bool> SaveNowAsync()
     {
         try
         {
-            _vm.Save();
+            if (_vm.CanSaveInsideVideo)
+            {
+                var insideIsDefault = _vm.SelectedSource?.Kind == SubtitleSourceKind.Matroska;
+                switch (await AskSaveDestination(_vm.EmbedTrackName, insideIsDefault))
+                {
+                    case SaveDestination.InsideVideo:
+                        return await _vm.SaveInsideVideoAsync();
+                    case SaveDestination.Cancel:
+                        return false;
+                }
+            }
+
+            return _vm.Save() != null;
         }
         catch (Exception ex)
         {
             _vm.StatusText = ex.Message;
+            return false;
         }
     }
 
@@ -703,7 +725,7 @@ public class SimpleWindow : Window
                 _vm.ZoomOut();
                 break;
             case Key.S when command:
-                SaveNow();
+                _ = SaveNowAsync();
                 break;
             default:
                 return;

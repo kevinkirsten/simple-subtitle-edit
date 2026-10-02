@@ -51,6 +51,7 @@ public partial class SimpleViewModel : ObservableObject
     [ObservableProperty] private string _playlistText = string.Empty;
     [ObservableProperty] private bool _hasPrevious;
     [ObservableProperty] private bool _hasNext;
+    [ObservableProperty] private bool _isIdle = true;
 
     public SimpleViewModel(IVideoPlayer? player)
     {
@@ -74,6 +75,104 @@ public partial class SimpleViewModel : ObservableObject
     public double ViewSeconds { get; private set; } = 20;
 
     public VideoPlaylist? Playlist { get; private set; }
+
+    /// <summary>Tells Plex the video's subtitles changed. Tests replace it.</summary>
+    public Func<string, Task<bool>> PlexRefresh { get; set; } = file => PlexNotifier.RefreshAsync(file);
+
+    /// <summary>mkvmerge (MKVToolNix), needed to save inside an mkv. Null when not installed.</summary>
+    public string? MkvmergePath { get; set; } = MatroskaEmbedder.FindMkvmerge();
+
+    public bool CanSaveInsideVideo => Session != null && MkvmergePath != null && MatroskaEmbedder.CanEmbedInto(VideoFileName);
+
+    /// <summary>Language of the track written into the video ("pt-BR"), from the online search language.</summary>
+    public string EmbedLanguage => MatroskaEmbedder.ToIetf(OnlineSettings.Language);
+
+    public string EmbedTrackName => MatroskaEmbedder.TrackNameFor(EmbedLanguage);
+
+    /// <summary>
+    /// Writes the subtitle (with the offset, trimmed to the video) into the mkv as a text track,
+    /// replacing this language's previous text track, then deletes the .srt next to the video.
+    /// The player lets go of the file while it is rewritten and reopens it where it was.
+    /// </summary>
+    public async Task<bool> SaveInsideVideoAsync()
+    {
+        if (!CanSaveInsideVideo || Session == null)
+        {
+            return false;
+        }
+
+        var video = VideoFileName;
+        var editedTrack = SelectedSource is { Kind: SubtitleSourceKind.Matroska } source ? source.TrackNumber : (int?)null;
+        var position = Position;
+        var srt = Path.Combine(Path.GetTempPath(), "sse-embed-" + Guid.NewGuid() + ".srt");
+        IsIdle = false;
+        StatusText = Strings.Embedding;
+        try
+        {
+            var text = new Nikse.SubtitleEdit.Core.SubtitleFormats.SubRip().ToText(Session.BuildShifted(Duration), string.Empty);
+            await File.WriteAllTextAsync(srt, text, new System.Text.UTF8Encoding(false));
+
+            _player?.Pause();
+            _player?.CloseFile();
+            EmbedResult result;
+            try
+            {
+                result = await MatroskaEmbedder.EmbedAsync(MkvmergePath!, video, srt, EmbedLanguage, editedTrack, CancellationToken.None);
+            }
+            finally
+            {
+                if (_player != null)
+                {
+                    await _player.LoadFile(video, position);
+                }
+            }
+
+            var sideFile = SyncSession.OutputPathFor(video);
+            if (File.Exists(sideFile))
+            {
+                File.Delete(sideFile);
+            }
+
+            ReloadSources(video, s => s.Kind == SubtitleSourceKind.Matroska && s.TrackNumber == result.TrackNumber);
+            var status = string.Format(Strings.Embedded, result.TrackNumber);
+            StatusText = status;
+            if (await PlexRefresh(video))
+            {
+                StatusText = status + Strings.PlexNotified;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            StatusText = ex.Message;
+            return false;
+        }
+        finally
+        {
+            IsIdle = true;
+            try { File.Delete(srt); } catch { /* temp */ }
+        }
+    }
+
+    /// <summary>Lists the subtitles of the video again and selects the one matching <paramref name="select"/>.</summary>
+    private void ReloadSources(string video, Func<SubtitleSource, bool> select)
+    {
+        Sources.Clear();
+        foreach (var s in SubtitleSourceFinder.Find(video))
+        {
+            Sources.Add(s);
+        }
+
+        var target = Sources.FirstOrDefault(select) ?? Sources.FirstOrDefault();
+        _loadingSource = true;
+        SelectedSource = target;
+        _loadingSource = false;
+        if (target != null)
+        {
+            LoadSource(target);
+        }
+    }
 
     /// <summary>The background waveform extraction of the open video (done when it completes).</summary>
     public Task WaveformLoading { get; private set; } = Task.CompletedTask;
@@ -390,7 +489,16 @@ public partial class SimpleViewModel : ObservableObject
         var status = StatusText;
         LoadSource(saved);
         StatusText = status;
+        _ = NotifyPlexAsync(VideoFileName, status);
         return result;
+    }
+
+    private async Task NotifyPlexAsync(string video, string status)
+    {
+        if (await PlexRefresh(video) && StatusText == status)
+        {
+            StatusText = status + Strings.PlexNotified;
+        }
     }
 
     public void PlayOrPause() => _player?.PlayOrPause();

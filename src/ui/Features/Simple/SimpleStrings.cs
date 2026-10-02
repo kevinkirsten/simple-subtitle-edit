@@ -57,6 +57,13 @@ public sealed class SimpleStrings
     public required string Cancel { get; init; }
     public required string FindOnline { get; init; }
     public required string BackToSimple { get; init; }
+    public required string SaveWhere { get; init; }
+    public required string SaveWhereHelp { get; init; }
+    public required string SaveSideFile { get; init; }
+    public required string SaveInsideVideo { get; init; }
+    public required string Embedding { get; init; }
+    public required string Embedded { get; init; }
+    public required string PlexNotified { get; init; }
     public required string OnlineSettingsTitle { get; init; }
     public required string OnlineApiKey { get; init; }
     public required string OnlineAppName { get; init; }
@@ -108,6 +115,13 @@ public sealed class SimpleStrings
         Cancel = "CANCEL",
         FindOnline = "FIND ONLINE",
         BackToSimple = "◀ Simple mode",
+        SaveWhere = "Where should this subtitle go?",
+        SaveWhereHelp = "NEXT TO THE VIDEO writes a .srt with the video's name. INSIDE THE VIDEO adds it to the mkv as a text track (can be turned off, and edited here again), replacing the previous one in this language, and deletes the .srt. Image subtitles already in the file are kept. The mkv is rewritten (a few seconds per GB) and checked before it replaces the original.",
+        SaveSideFile = "NEXT TO THE VIDEO (.srt)",
+        SaveInsideVideo = "INSIDE THE VIDEO ({0})",
+        Embedding = "Writing the subtitle into the video… (rewrites the mkv)",
+        Embedded = "Saved inside the video as track {0}.",
+        PlexNotified = " Plex was told to reload it.",
         OnlineSettingsTitle = "OpenSubtitles.com",
         OnlineApiKey = "API KEY",
         OnlineAppName = "APP NAME",
@@ -160,6 +174,13 @@ public sealed class SimpleStrings
         Cancel = "CANCELAR",
         FindOnline = "BUSCAR ONLINE",
         BackToSimple = "◀ Modo simples",
+        SaveWhere = "Onde salvar esta legenda?",
+        SaveWhereHelp = "AO LADO DO VÍDEO grava um .srt com o nome do vídeo. DENTRO DO VÍDEO coloca a legenda no mkv como faixa de texto (dá para desligar e editar aqui de novo), trocando a anterior deste idioma, e apaga o .srt. As legendas de imagem que já estão no arquivo ficam. O mkv é regravado (alguns segundos por GB) e conferido antes de substituir o original.",
+        SaveSideFile = "AO LADO DO VÍDEO (.srt)",
+        SaveInsideVideo = "DENTRO DO VÍDEO ({0})",
+        Embedding = "Gravando a legenda dentro do vídeo… (regrava o mkv)",
+        Embedded = "Salva dentro do vídeo como faixa {0}.",
+        PlexNotified = " O Plex foi avisado para recarregar.",
         OnlineSettingsTitle = "OpenSubtitles.com",
         OnlineApiKey = "CHAVE DE API",
         OnlineAppName = "NOME DO APP",
