@@ -364,6 +364,12 @@ public class SimpleWindow : Window
     /// </summary>
     public void ShowStillFrame(IImage image)
     {
+        if (_videoArea.Children.Count > 0 && _videoArea.Children[0] is Image still)
+        {
+            still.Source = image;
+            return;
+        }
+
         _videoArea.Children.Insert(0, new Image { Source = image, Stretch = Stretch.Uniform });
     }
 
