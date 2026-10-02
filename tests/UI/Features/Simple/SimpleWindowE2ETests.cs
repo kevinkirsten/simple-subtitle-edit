@@ -78,6 +78,9 @@ public sealed class SimpleWindowE2ETests : IDisposable
     private static T Find<T>(Window window, string automationId) where T : Control =>
         window.GetVisualDescendants().OfType<T>().First(c => AutomationProperties.GetAutomationId(c) == automationId);
 
+    private static string CaptionText(Window window) =>
+        string.Concat(Find<TextBlock>(window, "Caption").Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(r => r.Text) ?? []);
+
     private static void Click(Window window, Control control, Point? at = null)
     {
         var point = control.TranslatePoint(at ?? new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window)!.Value;
@@ -132,7 +135,28 @@ public sealed class SimpleWindowE2ETests : IDisposable
         Click(window, timeline, new Point(x, 30));
 
         Assert.InRange(player.Position, 1.9, 2.1);
-        Assert.Equal("Tony, você precisa ver isso.", Find<TextBlock>(window, "Caption").Text);
+        Assert.Equal("Tony, você precisa ver isso.", CaptionText(window));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ItalicTags_AreShownAsItalic_NotAsRawTags()
+    {
+        File.WriteAllText(Path.Combine(_dir.FullName, "Show S01E01.pt-BR.srt"), "1\n00:00:01,000 --> 00:00:03,000\n<i>Na manhã em que passei mal</i>\n<i>eu pensava...</i>\n");
+        var (window, player) = await OpenAsync();
+
+        window.ViewModel.Seek(2);
+        Pump();
+
+        var runs = Find<TextBlock>(window, "Caption").Inlines!.OfType<Avalonia.Controls.Documents.Run>().ToList();
+        Assert.DoesNotContain("<i>", CaptionText(window));
+        Assert.Contains("Na manhã em que passei mal", CaptionText(window));
+        Assert.All(runs, r => Assert.Equal(Avalonia.Media.FontStyle.Italic, r.FontStyle));
+
+        // Saving keeps the tags in the file (players and Plex show them as italic).
+        window.ViewModel.SetOffset(0.1);
+        window.ViewModel.Save();
+        Assert.Contains("<i>Na manhã em que passei mal</i>", File.ReadAllText(Path.Combine(_dir.FullName, "Show S01E01.srt")));
         window.Close();
     }
 

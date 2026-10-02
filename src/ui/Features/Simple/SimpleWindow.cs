@@ -41,6 +41,7 @@ public class SimpleWindow : Window
     private readonly DispatcherTimer _timer;
     private readonly Button _playButton;
     private readonly Grid _videoArea;
+    private TextBlock? _vmCaptionTarget;
     private readonly PlayheadOverlay _timelineCursor = new();
     private readonly PlayheadOverlay _minimapCursor = new();
     private bool _frameLoopRunning;
@@ -120,7 +121,8 @@ public class SimpleWindow : Window
             MinHeight = 48,
             Margin = new Thickness(8, 6),
         };
-        caption.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.CurrentLineText)));
+        // Styled from the SRT tags (<i>, <b>, <u>): shown as italic/bold/underline, never as raw tags.
+        _vmCaptionTarget = caption;
         Avalonia.Automation.AutomationProperties.SetAutomationId(caption, "Caption");
 
         _dropHint = new Border
@@ -302,6 +304,10 @@ public class SimpleWindow : Window
             if (e.PropertyName == nameof(SimpleViewModel.HasVideo))
             {
                 _dropHint.IsVisible = !_vm.HasVideo;
+            }
+            else if (e.PropertyName == nameof(SimpleViewModel.CurrentLineText))
+            {
+                ShowCaption(_vm.CurrentLineText);
             }
         };
 
@@ -550,6 +556,26 @@ public class SimpleWindow : Window
 
         _vm.Tick();
         RequestAnimationFrame(OnFrame);
+    }
+
+    private void ShowCaption(string text)
+    {
+        if (_vmCaptionTarget is not { } caption)
+        {
+            return;
+        }
+
+        caption.Inlines ??= new Avalonia.Controls.Documents.InlineCollection();
+        caption.Inlines.Clear();
+        foreach (var run in SubtitleMarkup.Parse(text))
+        {
+            caption.Inlines.Add(new Avalonia.Controls.Documents.Run(run.Text)
+            {
+                FontStyle = run.Italic ? FontStyle.Italic : FontStyle.Normal,
+                FontWeight = run.Bold ? FontWeight.ExtraBold : FontWeight.Bold,
+                TextDecorations = run.Underline ? Avalonia.Media.TextDecorations.Underline : null,
+            });
+        }
     }
 
     private void MoveCursors()

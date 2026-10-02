@@ -6,6 +6,7 @@ using Nikse.SubtitleEdit.Logic.Media;
 using Nikse.SubtitleEdit.UiLogic.SimpleSync;
 using System;
 using System.Globalization;
+using System.Linq;
 
 namespace Nikse.SubtitleEdit.Features.Simple;
 
@@ -190,6 +191,7 @@ public class TimelineControl : Control
 
         var active = session.ActiveAt(Position);
         var typeface = new Typeface(BrutalTheme.Mono);
+        var italicTypeface = new Typeface(BrutalTheme.Mono, FontStyle.Italic);
         foreach (var (start, end, paragraph) in session.VisibleBlocks(ViewStart, ViewStart + ViewSeconds))
         {
             var x1 = SecondsToX(start);
@@ -200,7 +202,10 @@ public class TimelineControl : Control
 
             if (rect.Width > 30)
             {
-                var text = new FormattedText(paragraph.Text.Replace(Environment.NewLine, " ").Replace("\n", " "), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, 11, BrutalTheme.Ink)
+                var runs = SubtitleMarkup.Parse(paragraph.Text);
+                var plain = string.Concat(runs.Select(r => r.Text)).Replace(Environment.NewLine, " ").Replace("\n", " ");
+                var blockFace = runs.Count > 0 && runs.All(r => r.Italic) ? italicTypeface : typeface;
+                var text = new FormattedText(plain, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, blockFace, 11, BrutalTheme.Ink)
                 {
                     MaxTextWidth = rect.Width - 8,
                     MaxTextHeight = rect.Height - 6,
