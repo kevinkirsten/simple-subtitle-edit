@@ -52,6 +52,11 @@ public partial class SimpleViewModel : ObservableObject
     [ObservableProperty] private bool _hasPrevious;
     [ObservableProperty] private bool _hasNext;
     [ObservableProperty] private bool _isIdle = true;
+    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private int _busyPercent;
+    [ObservableProperty] private string _busyText = string.Empty;
+
+    partial void OnIsIdleChanged(bool value) => IsBusy = !value;
 
     public SimpleViewModel(IVideoPlayer? player)
     {
@@ -119,8 +124,11 @@ public partial class SimpleViewModel : ObservableObject
         var editedTrack = SelectedSource is { Kind: SubtitleSourceKind.Matroska } source ? source.TrackNumber : (int?)null;
         var position = Position;
         var srt = Path.Combine(Path.GetTempPath(), "sse-embed-" + Guid.NewGuid() + ".srt");
+        BusyText = Strings.Embedding;
+        BusyPercent = 0;
         IsIdle = false;
         StatusText = Strings.Embedding;
+        var progress = new Progress<int>(p => BusyPercent = p);
         try
         {
             var text = new Nikse.SubtitleEdit.Core.SubtitleFormats.SubRip().ToText(Session.BuildShifted(Duration), string.Empty);
@@ -131,7 +139,7 @@ public partial class SimpleViewModel : ObservableObject
             EmbedResult result;
             try
             {
-                result = await MatroskaEmbedder.EmbedAsync(MkvmergePath!, video, srt, ietf, editedTrack, CancellationToken.None);
+                result = await MatroskaEmbedder.EmbedAsync(MkvmergePath!, video, srt, ietf, editedTrack, CancellationToken.None, progress);
             }
             finally
             {

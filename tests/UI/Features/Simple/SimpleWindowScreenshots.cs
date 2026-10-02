@@ -77,6 +77,17 @@ public class SimpleWindowScreenshots
             window.CaptureRenderedFrame()!.Save(Path.Combine(dir, $"main-{suffix}.png"));
             window.Close();
 
+            var busy = new SimpleWindow(createPlayer: false, new FakeVideoPlayer(90)) { Width = 1200, Height = 860 };
+            busy.Show();
+            await busy.OpenVideoAsync(video);
+            busy.ViewModel.BusyText = strings.Embedding;
+            busy.ViewModel.BusyPercent = 45;
+            busy.ViewModel.IsIdle = false;
+            Settle(busy);
+            busy.CaptureRenderedFrame()!.Save(Path.Combine(dir, $"busy-{suffix}.png"));
+            busy.ViewModel.IsIdle = true;
+            busy.Close();
+
             var info = new Nikse.SubtitleEdit.UiLogic.SimpleSync.MkvInfo(1,
             [
                 new Nikse.SubtitleEdit.UiLogic.SimpleSync.MkvTrack(2, 3, "subtitles", "HDMV PGS", "eng", "", ""),

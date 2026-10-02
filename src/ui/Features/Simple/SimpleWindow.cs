@@ -293,7 +293,7 @@ public class SimpleWindow : Window
         AddRow(root, status, 6);
         AddRow(root, help, 7);
         root.Bind(IsEnabledProperty, new Binding(nameof(SimpleViewModel.IsIdle)));
-        Content = root;
+        Content = new Grid { Children = { root, MakeBusyOverlay() } };
 
         _vm.Redraw += Redraw;
         _vm.CursorMoved += MoveCursors;
@@ -609,6 +609,56 @@ public class SimpleWindow : Window
 
         _vm.Tick();
         RequestAnimationFrame(OnFrame);
+    }
+
+    /// <summary>
+    /// Covers the window while a long job runs (rewriting the mkv): what is happening, a progress
+    /// bar with mkvmerge's real percentage, and why the buttons do not respond.
+    /// </summary>
+    private Control MakeBusyOverlay()
+    {
+        var text = BrutalTheme.Label(string.Empty, 15);
+        text.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.BusyText)));
+        text.TextWrapping = TextWrapping.Wrap;
+        text.MaxWidth = 460;
+
+        var bar = new ProgressBar
+        {
+            Minimum = 0,
+            Maximum = 100,
+            Width = 460,
+            Height = 18,
+            Foreground = BrutalTheme.Ink,
+            Background = BrutalTheme.Paper,
+            BorderBrush = BrutalTheme.Ink,
+            BorderThickness = BrutalTheme.Line,
+            CornerRadius = new CornerRadius(0),
+        };
+        bar.Bind(RangeBase.ValueProperty, new Binding(nameof(SimpleViewModel.BusyPercent)));
+        // Until mkvmerge reports a first percentage, an indeterminate bar shows it is working.
+        bar.Bind(ProgressBar.IsIndeterminateProperty, new Binding(nameof(SimpleViewModel.BusyPercent))
+        {
+            Converter = new Avalonia.Data.Converters.FuncValueConverter<int, bool>(p => p <= 0),
+        });
+        Avalonia.Automation.AutomationProperties.SetAutomationId(bar, "BusyProgress");
+
+        var percent = BrutalTheme.Label(string.Empty, 13);
+        percent.Bind(TextBlock.TextProperty, new Binding(nameof(SimpleViewModel.BusyPercent)) { StringFormat = "{0}%" });
+
+        var overlay = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#D9F2F2EE")),
+            Child = BrutalTheme.Box(new StackPanel { Spacing = 12, Children = { text, bar, percent } }, new Thickness(24)),
+        };
+        if (overlay.Child is Border box)
+        {
+            box.HorizontalAlignment = HorizontalAlignment.Center;
+            box.VerticalAlignment = VerticalAlignment.Center;
+        }
+
+        overlay.Bind(IsVisibleProperty, new Binding(nameof(SimpleViewModel.IsBusy)));
+        Avalonia.Automation.AutomationProperties.SetAutomationId(overlay, "BusyOverlay");
+        return overlay;
     }
 
     private void ShowCaption(string text)

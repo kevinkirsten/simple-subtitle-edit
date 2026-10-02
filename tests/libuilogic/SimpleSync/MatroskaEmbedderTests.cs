@@ -83,6 +83,20 @@ public class MatroskaEmbedderTests
         ], args);
     }
 
+    private sealed class SyncProgress(Action<int> report) : IProgress<int>
+    {
+        public void Report(int value) => report(value);
+    }
+
+    [Theory]
+    [InlineData("#GUI#progress 45%", 45)]
+    [InlineData("Progress: 100%", 100)]
+    [InlineData("#GUI#warning something", null)]
+    public void ParseProgress_ReadsMkvmergeOutput(string line, int? expected)
+    {
+        Assert.Equal(expected, MatroskaEmbedder.ParseProgress(line));
+    }
+
     [Fact]
     public void CanEmbedInto_OnlyMkv()
     {
@@ -109,7 +123,8 @@ public class MatroskaEmbedderTests
             var srt = Path.Combine(dir.FullName, "sub.srt");
             File.WriteAllText(srt, "1\n00:00:01,000 --> 00:00:02,000\nOlá\n");
 
-            var first = await MatroskaEmbedder.EmbedAsync(mkvmerge, video, srt, "pt-br", null, TestContext.Current.CancellationToken);
+            var reported = new List<int>();
+            var first = await MatroskaEmbedder.EmbedAsync(mkvmerge, video, srt, "pt-br", null, TestContext.Current.CancellationToken, new SyncProgress(reported.Add));
             File.WriteAllText(srt, "1\n00:00:02,000 --> 00:00:03,000\nDe novo\n");
             var second = await MatroskaEmbedder.EmbedAsync(mkvmerge, video, srt, "pt-br", first.TrackNumber, TestContext.Current.CancellationToken);
 
@@ -119,6 +134,7 @@ public class MatroskaEmbedderTests
             Assert.Equal("pt-BR", track.LanguageIetf);
             Assert.Equal("Português (Brasil)", track.Name);
             Assert.Equal([first.TrackNumber], second.RemovedTrackNumbers);
+            Assert.Contains(100, reported); // mkvmerge reported progress up to the end
             Assert.Empty(Directory.GetFiles(dir.FullName, "*sse-*", SearchOption.AllDirectories)); // no temp leftovers
 
             // The text inside is the second version, readable by the app's own loader.

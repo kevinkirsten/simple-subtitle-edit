@@ -147,7 +147,7 @@ public static class MatroskaEmbedder
     }
 
     /// <summary>Embeds <paramref name="subtitleFile"/> (UTF-8 SRT) into <paramref name="video"/>.</summary>
-    public static async Task<EmbedResult> EmbedAsync(string mkvmerge, string video, string subtitleFile, string language, int? editedTrackNumber, CancellationToken token)
+    public static async Task<EmbedResult> EmbedAsync(string mkvmerge, string video, string subtitleFile, string language, int? editedTrackNumber, CancellationToken token, IProgress<int>? progress = null)
     {
         var ietf = ToIetf(language);
         var before = await IdentifyAsync(mkvmerge, video, token);
@@ -158,8 +158,16 @@ public static class MatroskaEmbedder
         File.Delete(temp);
         try
         {
+            // --gui-mode makes mkvmerge print "#GUI#progress 45%" lines while it writes.
             var args = BuildArguments(temp, video, subtitleFile, ietf, TrackNameFor(ietf), remove);
-            var (code, stdout, stderr) = await RunAsync(mkvmerge, args, token);
+            args.Insert(0, "--gui-mode");
+            var (code, stdout, stderr) = await RunAsync(mkvmerge, args, token, line =>
+            {
+                if (ParseProgress(line) is { } percent)
+                {
+                    progress?.Report(percent);
+                }
+            });
             if (code > 1 || !File.Exists(temp))
             {
                 throw new EmbedException("mkvmerge failed: " + LastLines(stdout + stderr));
@@ -216,10 +224,17 @@ public static class MatroskaEmbedder
         File.Delete(aside);
     }
 
+    /// <summary>"#GUI#progress 45%" (gui mode) or "Progress: 45%" → 45.</summary>
+    public static int? ParseProgress(string line)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(line, @"(?:#GUI#progress|Progress:)\s*(\d{1,3})%");
+        return m.Success ? Math.Clamp(int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), 0, 100) : null;
+    }
+
     private static string LastLines(string text) =>
         string.Join(" ", text.Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(3)).Trim();
 
-    private static async Task<(int Code, string Stdout, string Stderr)> RunAsync(string exe, IEnumerable<string> args, CancellationToken token)
+    private static async Task<(int Code, string Stdout, string Stderr)> RunAsync(string exe, IEnumerable<string> args, CancellationToken token, Action<string>? onLine = null)
     {
         var psi = new ProcessStartInfo(exe)
         {
@@ -234,9 +249,42 @@ public static class MatroskaEmbedder
         }
 
         using var process = Process.Start(psi) ?? throw new EmbedException("Could not start mkvmerge");
-        var stdout = process.StandardOutput.ReadToEndAsync(token);
+        var output = new System.Text.StringBuilder();
+        var stdout = Task.Run(async () =>
+        {
+            // mkvmerge rewrites the progress line with \r; split on both.
+            var buffer = new char[4096];
+            var line = new System.Text.StringBuilder();
+            int read;
+            while ((read = await process.StandardOutput.ReadAsync(buffer, token)) > 0)
+            {
+                for (var i = 0; i < read; i++)
+                {
+                    var c = buffer[i];
+                    output.Append(c);
+                    if (c is '\n' or '\r')
+                    {
+                        if (line.Length > 0)
+                        {
+                            onLine?.Invoke(line.ToString());
+                            line.Clear();
+                        }
+                    }
+                    else
+                    {
+                        line.Append(c);
+                    }
+                }
+            }
+
+            if (line.Length > 0)
+            {
+                onLine?.Invoke(line.ToString());
+            }
+        }, token);
         var stderr = process.StandardError.ReadToEndAsync(token);
         await process.WaitForExitAsync(token);
-        return (process.ExitCode, await stdout, await stderr);
+        await stdout;
+        return (process.ExitCode, output.ToString(), await stderr);
     }
 }

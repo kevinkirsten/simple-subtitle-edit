@@ -50,9 +50,27 @@ public sealed class SimpleWindowEmbedTests : IDisposable
         Assert.Equal(SubtitleSourceKind.File, window.ViewModel.SelectedSource!.Kind);
 
         window.ViewModel.SetOffset(-1);
+        var overlay = Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(window).OfType<Avalonia.Controls.Border>()
+            .First(b => Avalonia.Automation.AutomationProperties.GetAutomationId(b) == "BusyOverlay");
+        var overlaySeen = false;
+        var percents = new System.Collections.Generic.List<int>();
+        window.ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SimpleViewModel.IsBusy) && window.ViewModel.IsBusy)
+            {
+                overlaySeen |= overlay.IsVisible;
+            }
+            else if (e.PropertyName == nameof(SimpleViewModel.BusyPercent))
+            {
+                percents.Add(window.ViewModel.BusyPercent);
+            }
+        };
         Assert.True(await window.SaveNowAsync());
         Dispatcher.UIThread.RunJobs();
 
+        Assert.True(overlaySeen); // shown while the mkv was rewritten
+        Assert.Contains(100, percents); // real progress from mkvmerge
+        Assert.False(overlay.IsVisible); // and gone after
         Assert.False(File.Exists(Path.ChangeExtension(video, ".srt")));
         var embedded = window.ViewModel.SelectedSource!;
         Assert.Equal(SubtitleSourceKind.Matroska, embedded.Kind);
