@@ -47,21 +47,9 @@ public class SaveChoiceDialog : Window
             languages.Insert(0, current);
         }
 
-        var language = new ComboBox
-        {
-            ItemsSource = languages,
-            SelectedItem = current,
-            MinWidth = 300,
-            FontFamily = BrutalTheme.Mono,
-            Foreground = BrutalTheme.Ink,
-            Background = BrutalTheme.Paper,
-            BorderBrush = BrutalTheme.Ink,
-            BorderThickness = BrutalTheme.Line,
-            CornerRadius = new CornerRadius(0),
-            Cursor = BrutalTheme.Hand,
-        };
-        language.Classes.Add(BrutalTheme.ButtonClass);
-        Avalonia.Automation.AutomationProperties.SetAutomationId(language, "SaveLanguage");
+        var language = BrutalTheme.ComboBox("SaveLanguage", 300);
+        language.ItemsSource = languages;
+        language.SelectedItem = current;
 
         var warning = BrutalTheme.Label(string.Empty, 12);
         warning.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
@@ -78,7 +66,7 @@ public class SaveChoiceDialog : Window
         void Update()
         {
             var lang = (SubtitleLanguage?)language.SelectedItem ?? current;
-            inside.Content = string.Format(strings.SaveInsideVideo, lang.Name);
+            BrutalTheme.SetText(inside, string.Format(strings.SaveInsideVideo, lang.Name));
             warning.Text = DescribeExisting(request, lang.Ietf);
         }
 
@@ -102,7 +90,7 @@ public class SaveChoiceDialog : Window
             Children =
             {
                 question,
-                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { BrutalTheme.Label(strings.SaveLanguageLabel, 12), language } },
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { BrutalTheme.Label(strings.SaveLanguageLabel, 12), language, BrutalTheme.InfoIcon(strings.SaveLanguageInfo, "SaveLanguageInfo") } },
                 warning,
                 help,
                 new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, side, inside } },

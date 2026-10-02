@@ -223,6 +223,35 @@ public class SimpleWindowStyleTests
     }
 
     [AvaloniaFact]
+    public void LanguagePickers_HaveAnInfoTooltip_AndDarkTextOnHover()
+    {
+        SimpleStrings.Current = SimpleStrings.English;
+        var dialog = new OnlineSettingsDialog(new Nikse.SubtitleEdit.UiLogic.SimpleSync.OpenSubtitlesSettings { Language = "pt-br" });
+        dialog.Show();
+        Pump();
+
+        var info = dialog.GetVisualDescendants().OfType<Control>().Single(c => Avalonia.Automation.AutomationProperties.GetAutomationId(c) == "OnlineLanguageInfo");
+        Assert.Contains("\"ea\"", ((TextBlock)ToolTip.GetTip(info)!).Text);
+        Assert.Equal(0, ToolTip.GetShowDelay(info));
+
+        var picker = dialog.GetVisualDescendants().OfType<ComboBox>().Single(c => Avalonia.Automation.AutomationProperties.GetAutomationId(c) == "OnlineLanguage");
+        var center = picker.TranslatePoint(new Point(picker.Bounds.Width / 2, picker.Bounds.Height / 2), dialog)!.Value;
+        dialog.MouseMove(center);
+        Pump();
+        Assert.True(picker.IsPointerOver);
+        var shown = picker.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Português (Brasil) (pt-BR)");
+        Assert.Equal(((ISolidColorBrush)BrutalTheme.Ink).Color, ((ISolidColorBrush)shown.Foreground!).Color);
+        dialog.Close();
+
+        var save = new SaveChoiceDialog(new SaveRequest(null, "pt-BR", null, InsideIsDefault: false));
+        save.Show();
+        Pump();
+        var saveInfo = save.GetVisualDescendants().OfType<Control>().Single(c => Avalonia.Automation.AutomationProperties.GetAutomationId(c) == "SaveLanguageInfo");
+        Assert.Contains("pt-PT", ((TextBlock)ToolTip.GetTip(saveInfo)!).Text);
+        save.Close();
+    }
+
+    [AvaloniaFact]
     public void UnsavedDialog_ButtonsStayReadableOnHover()
     {
         SimpleStrings.Current = SimpleStrings.English;

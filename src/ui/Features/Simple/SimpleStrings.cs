@@ -67,6 +67,8 @@ public sealed class SimpleStrings
     public required string SaveWillKeep { get; init; }
     public required string SaveNothingInLanguage { get; init; }
     public required string TrackText { get; init; }
+    public required string SaveLanguageInfo { get; init; }
+    public required string OnlineLanguageInfo { get; init; }
     public required string TrackImage { get; init; }
     public required string Embedded { get; init; }
     public required string PlexNotified { get; init; }
@@ -131,6 +133,8 @@ public sealed class SimpleStrings
         SaveWillKeep = "Also inside, kept as they are: {0}.",
         SaveNothingInLanguage = "Nothing in this language inside the video yet.",
         TrackText = "text",
+        SaveLanguageInfo = "The language is written as the track's tag (pt-BR, en, es-419…), which Plex and players use to pick and name the subtitle. Variants are different tracks: saving pt-BR never touches a pt-PT track. Only mkv files can hold it; other formats save the .srt next to the video.",
+        OnlineLanguageInfo = "Which subtitles FIND ONLINE asks OpenSubtitles.com for. Some languages have their own code there (Latin American Spanish is \"ea\", Chinese is \"zh-cn\" / \"zh-tw\"); the app converts it, you only pick the name.",
         TrackImage = "image",
         Embedded = "Saved inside the video as track {0}.",
         PlexNotified = " Plex was told to reload it.",
@@ -196,6 +200,8 @@ public sealed class SimpleStrings
         SaveWillKeep = "Também dentro, ficam como estão: {0}.",
         SaveNothingInLanguage = "Ainda não há nada neste idioma dentro do vídeo.",
         TrackText = "texto",
+        SaveLanguageInfo = "O idioma vira a marca da faixa (pt-BR, en, es-419…), que o Plex e os players usam para escolher e nomear a legenda. Variantes são faixas diferentes: salvar pt-BR nunca mexe numa faixa pt-PT. Só arquivos mkv guardam a faixa; nos outros formatos o .srt fica ao lado do vídeo.",
+        OnlineLanguageInfo = "Em qual idioma o BUSCAR ONLINE procura legendas no OpenSubtitles.com. Alguns idiomas têm código próprio lá (espanhol latino é \"ea\", chinês é \"zh-cn\" / \"zh-tw\"); o app converte, você só escolhe o nome.",
         TrackImage = "imagem",
         Embedded = "Salva dentro do vídeo como faixa {0}.",
         PlexNotified = " O Plex foi avisado para recarregar.",

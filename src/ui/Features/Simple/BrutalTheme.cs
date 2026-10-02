@@ -120,11 +120,85 @@ public static class BrutalTheme
         Child = child,
     };
 
+    /// <summary>
+    /// The label as its own TextBlock with the font set locally: Subtitle Edit styles every
+    /// TextBlock with the UI font, and the one a Button generates for string content took it,
+    /// with metrics that put capitals above the middle of the button.
+    /// </summary>
+    public static TextBlock ButtonLabel(string text) => new()
+    {
+        Text = text,
+        FontFamily = Mono,
+        FontWeight = FontWeight.Bold,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center,
+        TextAlignment = TextAlignment.Center,
+    };
+
+    public static void SetText(Button button, string text) => button.Content = ButtonLabel(text);
+
+    /// <summary>A drop-down in the same look; items shown as dark mono text in every state.</summary>
+    public static ComboBox ComboBox(string automationId, double minWidth)
+    {
+        var combo = new ComboBox
+        {
+            MinWidth = minWidth,
+            FontFamily = Mono,
+            Foreground = Ink,
+            Background = Paper,
+            BorderBrush = Ink,
+            BorderThickness = Line,
+            CornerRadius = new CornerRadius(0),
+            Cursor = Hand,
+            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<object>((item, _) => new TextBlock
+            {
+                Text = item?.ToString() ?? string.Empty,
+                FontFamily = Mono,
+                Foreground = Ink,
+                VerticalAlignment = VerticalAlignment.Center,
+            }),
+        };
+        combo.Classes.Add(ButtonClass);
+        Avalonia.Automation.AutomationProperties.SetAutomationId(combo, automationId);
+        return combo;
+    }
+
+    /// <summary>A small circled "i"; hovering it shows <paramref name="tip"/>.</summary>
+    public static Control InfoIcon(string tip, string automationId)
+    {
+        var icon = new Border
+        {
+            Width = 20,
+            Height = 20,
+            CornerRadius = new CornerRadius(10),
+            BorderBrush = Ink,
+            BorderThickness = new Thickness(1.5),
+            Background = Paper,
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.Help),
+            Child = new TextBlock
+            {
+                Text = "i",
+                FontFamily = Mono,
+                FontWeight = FontWeight.Bold,
+                FontSize = 12,
+                Foreground = Ink,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        };
+        ToolTip.SetTip(icon, new TextBlock { Text = tip, TextWrapping = TextWrapping.Wrap, MaxWidth = 380, FontFamily = Mono, FontSize = 12 });
+        ToolTip.SetShowDelay(icon, 0);
+        Avalonia.Automation.AutomationProperties.SetAutomationId(icon, automationId);
+        Avalonia.Automation.AutomationProperties.SetHelpText(icon, tip);
+        return icon;
+    }
+
     public static Button Button(string text, string automationId)
     {
         var button = new Button
         {
-            Content = text,
+            Content = ButtonLabel(text),
             FontFamily = Mono,
             FontWeight = FontWeight.Bold,
             Foreground = Ink,
@@ -135,6 +209,7 @@ public static class BrutalTheme
             Padding = new Thickness(12, 6),
             MinWidth = 44,
             HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Stretch,
             Cursor = Hand,
         };

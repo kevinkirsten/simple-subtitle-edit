@@ -53,21 +53,9 @@ public class OnlineSettingsDialog : Window
             languages.Insert(0, currentLanguage);
         }
 
-        var language = new ComboBox
-        {
-            ItemsSource = languages,
-            SelectedItem = currentLanguage,
-            Width = 360,
-            FontFamily = BrutalTheme.Mono,
-            Foreground = BrutalTheme.Ink,
-            Background = BrutalTheme.Paper,
-            BorderBrush = BrutalTheme.Ink,
-            BorderThickness = BrutalTheme.Line,
-            CornerRadius = new CornerRadius(0),
-            Cursor = BrutalTheme.Hand,
-        };
-        language.Classes.Add(BrutalTheme.ButtonClass);
-        Avalonia.Automation.AutomationProperties.SetAutomationId(language, "OnlineLanguage");
+        var language = BrutalTheme.ComboBox("OnlineLanguage", 330);
+        language.ItemsSource = languages;
+        language.SelectedItem = currentLanguage;
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto"), RowSpacing = 8, ColumnSpacing = 12 };
         void AddRow(int row, string label, Control field)
@@ -84,7 +72,12 @@ public class OnlineSettingsDialog : Window
         AddRow(1, strings.OnlineAppName, appName);
         AddRow(2, strings.OnlineUsername, username);
         AddRow(3, strings.OnlinePassword, password);
-        AddRow(4, strings.OnlineLanguage, language);
+        AddRow(4, strings.OnlineLanguage, new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 10,
+            Children = { language, BrutalTheme.InfoIcon(strings.OnlineLanguageInfo, "OnlineLanguageInfo") },
+        });
 
         var help = BrutalTheme.Label(strings.OnlineHelp, 11);
         help.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
