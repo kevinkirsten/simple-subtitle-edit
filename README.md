@@ -9,7 +9,7 @@ player gets it right.
 
 ![Dragging the yellow subtitle blocks onto the green speech, then playing](docs/images/simple/sync.gif)
 
-[Leia em português](#português)
+**⬇ [Download](#install)** for macOS, Windows and Linux · [Leia em português](#português)
 
 ---
 
@@ -61,14 +61,18 @@ Then Plex is told to reload the video, so the new subtitle is on the TV a few se
 
 ## Install
 
-**[Download the latest release](https://github.com/kevinkirsten/simple-subtitle-edit/releases/latest)**
-
-| System | File | What to do |
+<!-- downloads:start -->
+| | Download | |
 |---|---|---|
-| **macOS** | `…macOS-Apple-Silicon.dmg` (M1–M5) or `…macOS-Intel.dmg` | Open it, drag the app to Applications. First time: right-click the app › **Open** › **Open** |
-| **Windows** | `…Windows-x64-Setup.exe` (most PCs) or `…Windows-arm64-Setup.exe` | Run it. On "Windows protected your PC": **More info** › **Run anyway** |
-| **Ubuntu / Debian** | `simple-subtitle-edit_…_amd64.deb` (or `_arm64`) | `sudo apt install ./simple-subtitle-edit_*.deb` |
-| **Fedora** | `simple-subtitle-edit-….x86_64.rpm` (or `.aarch64`) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
+| 🍎 **macOS** — Apple Silicon (M1–M5) | [**Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg) | Open it, drag the app to Applications |
+| 🍎 **macOS** — Intel | [Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg) | Open it, drag the app to Applications |
+| 🪟 **Windows** — most PCs | [**Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe) | Run it |
+| 🪟 **Windows** — ARM (Snapdragon, Surface Pro X) | [Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe) | Run it |
+| 🐧 **Ubuntu / Debian** | [simple-subtitle-edit_0.1.0_amd64.deb](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_amd64.deb) · [arm64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_arm64.deb) | `sudo apt install ./simple-subtitle-edit_*.deb` |
+| 🐧 **Fedora** | [simple-subtitle-edit-0.1.0-1.x86_64.rpm](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.x86_64.rpm) · [aarch64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.aarch64.rpm) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
+
+Version 0.1.0 · [all files and release notes](https://github.com/kevinkirsten/simple-subtitle-edit/releases/tag/v0.1.0) · Windows without installer: [x64 zip](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-x64-portable.zip), [ARM zip](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-arm64-portable.zip)
+<!-- downloads:end -->
 
 On macOS and Windows everything it needs (video player, ffmpeg, mkvmerge) is inside the app.
 On Linux the package installs mpv, ffmpeg and MKVToolNix with it.
@@ -169,6 +173,8 @@ aí todo player acerta.
 
 ![Arrastando os blocos amarelos da legenda até as falas verdes e dando play](docs/images/simple/sync.gif)
 
+**⬇ [Baixar](#instalar)** para macOS, Windows e Linux
+
 ### 1. Encaixe a legenda nas falas
 
 Abra um vídeo. Os blocos verdes são as falas do áudio; os amarelos, as falas da legenda. Se não
@@ -205,14 +211,18 @@ avisado e a legenda nova aparece na TV em segundos.
 
 ### Instalar
 
-**[Baixe a versão mais recente](https://github.com/kevinkirsten/simple-subtitle-edit/releases/latest)**
+<!-- downloads-pt:start -->
+| | Download | |
+|---|---|---|
+| 🍎 **macOS** — Apple Silicon (M1–M5) | [**Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg) | Abra e arraste o app para Applications |
+| 🍎 **macOS** — Intel | [Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg) | Abra e arraste o app para Applications |
+| 🪟 **Windows** — a maioria dos PCs | [**Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe) | Execute |
+| 🪟 **Windows** — ARM (Snapdragon, Surface Pro X) | [Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe) | Execute |
+| 🐧 **Ubuntu / Debian** | [simple-subtitle-edit_0.1.0_amd64.deb](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_amd64.deb) · [arm64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_arm64.deb) | `sudo apt install ./simple-subtitle-edit_*.deb` |
+| 🐧 **Fedora** | [simple-subtitle-edit-0.1.0-1.x86_64.rpm](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.x86_64.rpm) · [aarch64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.aarch64.rpm) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
 
-- **macOS:** abra o `.dmg` (Apple Silicon para M1–M5, Intel para os outros) e arraste o app para
-  Applications. Na primeira vez: botão direito no app › **Open** › **Open**.
-- **Windows:** rode o `-Setup.exe` (x64 para a maioria dos PCs). No aviso "Windows protected your
-  PC": **More info** › **Run anyway**.
-- **Ubuntu / Debian:** `sudo apt install ./simple-subtitle-edit_*.deb`
-- **Fedora:** `sudo dnf install ./simple-subtitle-edit-*.rpm`
+Versão 0.1.0 · [todos os arquivos e notas da versão](https://github.com/kevinkirsten/simple-subtitle-edit/releases/tag/v0.1.0)
+<!-- downloads-pt:end -->
 
 No macOS e no Windows tudo que ele precisa (player, ffmpeg, mkvmerge) vem dentro do app; no Linux
 o pacote instala junto. O sistema pergunta uma vez na primeira abertura porque o app não tem

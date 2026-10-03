@@ -157,6 +157,7 @@ jobs:
     needs: [macos, windows, linux]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
         with:
           path: ./artifacts
@@ -193,3 +194,15 @@ jobs:
               (installs mpv, ffmpeg and MKVToolNix too).
 
             macOS and Windows builds carry the video player, ffmpeg and mkvmerge inside.
+
+      # Point the README's direct download links at this release.
+      - name: Update README download links
+        run: |
+          git fetch origin main
+          git checkout main
+          scripts/readme-downloads.sh ${{ inputs.version }}
+          if git diff --quiet README.md; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "README: download links for v${{ inputs.version }}"
+          git push origin main
