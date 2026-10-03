@@ -21,6 +21,7 @@ using Nikse.SubtitleEdit.Controls.VideoPlayer;
 using Nikse.SubtitleEdit.UiLogic.AudioToText;
 using Nikse.SubtitleEdit.Core.BluRaySup;
 using Nikse.SubtitleEdit.Core.Common;
+using Nikse.SubtitleEdit.Core.Common.TextLengthCalculator;
 using Nikse.SubtitleEdit.Core.Enums;
 using Nikse.SubtitleEdit.Core.ContainerFormats;
 using Nikse.SubtitleEdit.Core.ContainerFormats.Chapters;
@@ -4823,7 +4824,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerBluRaySup();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -4849,7 +4850,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerBdnXml();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -4879,7 +4880,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerBdnXml(true);
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -4905,7 +4906,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerImscImage();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -4931,7 +4932,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerWebVttThumbnail();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -4957,7 +4958,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerDCinemaInteropPng();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -4983,7 +4984,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerDCinemaSmpte2014Png();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -5009,7 +5010,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerDost();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -5035,7 +5036,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerFcp();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -5061,7 +5062,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerImagesWithTimeCode();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -5087,7 +5088,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerDvdSup();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -5113,7 +5114,7 @@ public partial class MainViewModel :
         IExportHandler exportHandler = new ExportHandlerVobSub();
         var result = await ShowDialogAsync<ExportImageBasedWindow, ExportImageBasedViewModel>(vm =>
         {
-            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header);
+            vm.Initialize(exportHandler, Subtitles, _subtitleFileName, _videoFileName, _subtitle.Header, removeAssaCommentBlocks: IsFormatAssaOrSsa);
         });
 
         if (!result.OkPressed)
@@ -5142,7 +5143,7 @@ public partial class MainViewModel :
         // other save does.
         var result = await ShowDialogAsync<ExportCustomTextFormatWindow, ExportCustomTextFormatViewModel>(vm =>
         {
-            vm.Initialize(GetSaveSubtitle().Paragraphs.ToList(), _subtitleFileName, _videoFileName);
+            vm.Initialize(GetExportSubtitle().Paragraphs.ToList(), _subtitleFileName, _videoFileName);
         });
     }
 
@@ -5162,7 +5163,7 @@ public partial class MainViewModel :
 
         // Rows rebuilt from GetSaveSubtitle: the time codes it writes must be the ones a save
         // writes (video offset included), and the read-only reference rows must stay out.
-        var lines = GetSaveSubtitle().Paragraphs.Select(p => new SubtitleLineViewModel(p, SelectedSubtitleFormat)).ToList();
+        var lines = GetExportSubtitle().Paragraphs.Select(p => new SubtitleLineViewModel(p, SelectedSubtitleFormat)).ToList();
         var result = await ShowDialogAsync<ExportPlainTextWindow, ExportPlainTextViewModel>(vm => { vm.Initialize(lines, _subtitleFileName, _videoFileName); });
     }
 
@@ -5182,7 +5183,7 @@ public partial class MainViewModel :
 
         var format = new CapMakerPlus();
         using var ms = new MemoryStream();
-        format.Save(_subtitleFileName, ms, GetSaveSubtitle(), false);
+        format.Save(_subtitleFileName, ms, GetExportSubtitle(), false);
 
         var fileName = await _fileHelper.PickSaveSubtitleFile(
             Window!,
@@ -5213,7 +5214,7 @@ public partial class MainViewModel :
 
         var format = new CheetahCaption();
         using var ms = new MemoryStream();
-        format.Save(_subtitleFileName, ms, GetSaveSubtitle(), false);
+        format.Save(_subtitleFileName, ms, GetExportSubtitle(), false);
 
         var fileName = await _fileHelper.PickSaveSubtitleFile(
             Window!,
@@ -5244,7 +5245,7 @@ public partial class MainViewModel :
 
         var format = new CheetahCaptionOld();
         using var ms = new MemoryStream();
-        format.Save(_subtitleFileName, ms, GetSaveSubtitle(), false);
+        format.Save(_subtitleFileName, ms, GetExportSubtitle(), false);
 
         var fileName = await _fileHelper.PickSaveSubtitleFile(
             Window!,
@@ -5302,7 +5303,7 @@ public partial class MainViewModel :
 
         using (var ms = new MemoryStream())
         {
-            cavena.Save(fileName, ms, GetSaveSubtitle(), false);
+            cavena.Save(fileName, ms, GetExportSubtitle(), false);
             ms.Position = 0;
             await File.WriteAllBytesAsync(fileName, ms.ToArray());
         }
@@ -5363,7 +5364,7 @@ public partial class MainViewModel :
     /// </summary>
     internal byte[] GetDvbTeletextExportBytes(ManzanitaTeletextWriter writer)
     {
-        return writer.GetBytes(GetSaveSubtitle());
+        return writer.GetBytes(GetExportSubtitle());
     }
 
     [RelayCommand]
@@ -5396,7 +5397,7 @@ public partial class MainViewModel :
         }
 
         using var ms = new MemoryStream();
-        pac.Save(fileName, ms, GetSaveSubtitle(), false);
+        pac.Save(fileName, ms, GetExportSubtitle(), false);
         ms.Position = 0;
         await File.WriteAllBytesAsync(fileName, ms.ToArray());
 
@@ -5419,7 +5420,7 @@ public partial class MainViewModel :
 
         var format = new PacUnicode();
         using var ms = new MemoryStream();
-        format.Save(_subtitleFileName, ms, GetSaveSubtitle());
+        format.Save(_subtitleFileName, ms, GetExportSubtitle());
 
         var fileName = await _fileHelper.PickSaveSubtitleFile(
             Window!,
@@ -5552,7 +5553,7 @@ public partial class MainViewModel :
             // A failed write must surface as an error dialog: an exception out of an async command
             // dies silently, which read as "Save does nothing" in the field (unquoted font colors
             // used to throw here).
-            if (!format.Save(fileName, GetSaveSubtitle()))
+            if (!format.Save(fileName, GetExportSubtitle()))
             {
                 await MessageBox.Show(Window!, Se.Language.General.Error,
                     string.Format(Se.Language.General.CouldNotSaveFileXErrorY, fileName, string.Empty),
@@ -10326,7 +10327,9 @@ public partial class MainViewModel :
         foreach (var transcribedLine in resultSpeechToText.ResultAudioClips)
         {
             var selectedLine = transcribedLine?.Line;
-            if (transcribedLine != null && selectedLine != null)
+            // A clip that failed (or had no speech) has no transcription - its line keeps its
+            // text instead of being blanked, now that a partly failed run is applied (#15497).
+            if (transcribedLine != null && selectedLine != null && transcribedLine.Transcription.Paragraphs.Count > 0)
             {
                 if (selectedLine.Duration.TotalSeconds > 10 && transcribedLine.Transcription.Paragraphs.Count > 1)
                 {
@@ -10521,6 +10524,51 @@ public partial class MainViewModel :
         }
 
         await ShowDialogAsync<BurnInWindow, BurnInViewModel>(vm => { vm.Initialize(_videoFileName ?? string.Empty, GetUpdateSubtitle(), SelectedSubtitleFormat); });
+    }
+
+    [RelayCommand]
+    private async Task ShowVideoBurnInSelectedLines()
+    {
+        var selectedItems = new HashSet<SubtitleLineViewModel>(SubtitleGridSelectedItems.Cast<SubtitleLineViewModel>());
+        if (Window == null || selectedItems.Count == 0)
+        {
+            return;
+        }
+
+        var ffmpegOk = await RequireFfmpegOk();
+        if (!ffmpegOk)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_videoFileName))
+        {
+            await CommandVideoOpen();
+        }
+
+        if (string.IsNullOrEmpty(_videoFileName))
+        {
+            return;
+        }
+
+        // A copy of the working subtitle keeps the header (ASSA styles) - only the selected lines go in.
+        var subtitle = new Subtitle(GetUpdateSubtitle(), false);
+        subtitle.Paragraphs.Clear();
+        foreach (var line in Subtitles)
+        {
+            if (!line.IsReferenceOnly && selectedItems.Contains(line))
+            {
+                subtitle.Paragraphs.Add(line.ToParagraph(SelectedSubtitleFormat));
+            }
+        }
+
+        if (subtitle.Paragraphs.Count == 0)
+        {
+            return;
+        }
+
+        subtitle.Renumber();
+        await ShowDialogAsync<BurnInWindow, BurnInViewModel>(vm => { vm.InitializeSelectedLines(_videoFileName, subtitle, SelectedSubtitleFormat); });
     }
 
     [RelayCommand]
@@ -11188,7 +11236,7 @@ public partial class MainViewModel :
 
             InitializeWaveformDisplayMode();
 
-            AudioVisualizer.ShotChanges = ShotChangesHelper.FromDisk(_videoFileName);
+            AudioVisualizer.ShotChanges = ShotChangesHelper.FromDisk(_videoFileName, _audioTrack?.FfIndex ?? -1);
             UpdateShotChangesListMenuItem();
             if (AudioVisualizer.ShotChanges.Count == 0)
             {
@@ -14505,11 +14553,14 @@ public partial class MainViewModel :
 
         if (result.OkPressed)
         {
-            var selectedSubtitle = SelectedSubtitle;
+            var selectedId = SelectedSubtitle?.Id;
             ReplaceSubtitles(result.Subtitles);
 
             Renumber();
 
+            // The dialog hands back copies of the rows, so find the current line again by Id -
+            // the old instance is no longer in Subtitles.
+            var selectedSubtitle = selectedId == null ? null : Subtitles.FirstOrDefault(p => p.Id == selectedId);
             if (selectedSubtitle != null)
             {
                 SelectAndScrollToSubtitle(selectedSubtitle);
@@ -15653,12 +15704,17 @@ public partial class MainViewModel :
     }
 
     /// <summary>
-    /// Slack for the "keep gap if close" test: frame-snapped gaps land a fraction of a millisecond
-    /// above MinimumBetweenLines (2 frames at 23.976 fps = 83.4 ms vs. a setting of 83 ms). Half a
-    /// frame covers that rounding; a whole frame (issue #15511) also caught a gap one frame wider than
-    /// the minimum, so nudging towards the neighbour locked the gap at minimum + 1 frame.
+    /// The "keep gap if close" test: a gap counts as close when it is strictly below "minimum gap plus
+    /// one frame" (with half a millisecond of slack for whole-millisecond rounding). That is the
+    /// smallest on-frame gap at or above MinimumBetweenLines, which can be most of a frame above it
+    /// when the minimum is in milliseconds (24 ms at 59.94 fps: 33.4 ms; at 50 fps: 40 ms; 100 ms at
+    /// 23.976 fps: 125.1 ms) - a half-frame tolerance missed those, so the nudge clamped to
+    /// "neighbour + minimum" (off the frame grid) instead of carrying the neighbour along. A gap of
+    /// minimum + 1 frame (issue #15511: 3 frames with a 2-frame minimum) is not close, so walking
+    /// towards the neighbour still settles on the minimum.
     /// </summary>
-    private static double KeepGapCloseToleranceMs() => FramesToMilliseconds(1) / 2.0;
+    private static bool IsKeepGapClose(double gapToNeighbourMs, double minGapMs) =>
+        gapToNeighbourMs < minGapMs + FramesToMilliseconds(1) - 0.5;
 
     private void MoveStartByFrames(int frames, bool keepGapPrevIfClose)
     {
@@ -15691,7 +15747,7 @@ public partial class MainViewModel :
         var prevIsClose = false;
         if (keepGapPrevIfClose && prev != null
             && prev.EndTime.TotalMilliseconds <= s.StartTime.TotalMilliseconds
-            && prev.EndTime.TotalMilliseconds + gapMs + KeepGapCloseToleranceMs() >= s.StartTime.TotalMilliseconds)
+            && IsKeepGapClose(s.StartTime.TotalMilliseconds - prev.EndTime.TotalMilliseconds, gapMs))
         {
             prevIsClose = true;
             prevGapMs = s.StartTime.TotalMilliseconds - prev.EndTime.TotalMilliseconds;
@@ -15764,7 +15820,7 @@ public partial class MainViewModel :
         var nextIsClose = false;
         if (keepGapNextIfClose && next != null
             && s.EndTime.TotalMilliseconds <= next.StartTime.TotalMilliseconds
-            && s.EndTime.TotalMilliseconds + gapMs + KeepGapCloseToleranceMs() >= next.StartTime.TotalMilliseconds)
+            && IsKeepGapClose(next.StartTime.TotalMilliseconds - s.EndTime.TotalMilliseconds, gapMs))
         {
             nextIsClose = true;
             nextGapMs = next.StartTime.TotalMilliseconds - s.EndTime.TotalMilliseconds;
@@ -16735,6 +16791,10 @@ public partial class MainViewModel :
         _isRunningCustomShortcut = true;
         _undoRedoManager.CheckForChanges(null);
         _undoRedoManager.StopChangeDetection();
+
+        // Suspend as well as stop: commands run as steps (e.g. via RunWithoutChangeDetection)
+        // restart detection in their own finally, which would split the run into several undo steps.
+        _undoRedoManager.SuspendChangeDetection();
         try
         {
             Dictionary<string, IRelayCommand>? commands = null;
@@ -16755,6 +16815,10 @@ public partial class MainViewModel :
                         if (commands.TryGetValue(step.ActionName, out var command))
                         {
                             await ExecuteCommandAndWait(command);
+
+                            // Focus (and some other UI) changes are posted to the dispatcher - let
+                            // them land so the next step sees e.g. the newly focused control.
+                            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
                         }
 
                         break;
@@ -16767,6 +16831,7 @@ public partial class MainViewModel :
         }
         finally
         {
+            _undoRedoManager.ResumeChangeDetection();
             _undoRedoManager.StartChangeDetection();
             _isRunningCustomShortcut = false;
         }
@@ -16835,8 +16900,10 @@ public partial class MainViewModel :
         }
 
         // Only surround the selected text when editing a single line with part of the text
-        // selected - like SE 4 does (#12873).
-        if (selectedItems.Count == 1 && SurroundTextBoxSelection(surroundLeft, surroundRight, behavior))
+        // selected - like SE 4 does (#12873). "Each line" always works on the whole text, line by line.
+        if (scope == SurroundWithScope.SelectionOrText &&
+            selectedItems.Count == 1 &&
+            SurroundTextBoxSelection(surroundLeft, surroundRight, behavior))
         {
             _updateAudioVisualizer = true;
             return;
@@ -19947,6 +20014,69 @@ public partial class MainViewModel :
     private void FocusTextBox()
     {
         FocusEditTextBox();
+    }
+
+    // Fixed-target focus commands (unlike the "toggle focus" ones), so a custom shortcut step
+    // always lands in the same place.
+    [RelayCommand]
+    private void FocusSubtitleListView()
+    {
+        FocusSubtitleGrid();
+    }
+
+    [RelayCommand]
+    private void FocusWaveform()
+    {
+        FocusAudioVisualizer();
+    }
+
+    [RelayCommand]
+    private void TextBoxGoToStart()
+    {
+        TextBoxMoveCaret(toEnd: false);
+    }
+
+    [RelayCommand]
+    private void TextBoxGoToEnd()
+    {
+        TextBoxMoveCaret(toEnd: true);
+    }
+
+    /// <summary>
+    /// Puts the caret at the start/end of the focused text box (original or main), focusing the
+    /// main text box first when neither has focus - so it also works from the list view.
+    /// </summary>
+    private void TextBoxMoveCaret(bool toEnd)
+    {
+        var tb = GetFocusedTextBoxWrapper() ?? EditTextBox;
+        void MoveCaret()
+        {
+            tb.ClearSelection();
+            tb.CaretIndex = toEnd ? tb.Text?.Length ?? 0 : 0;
+        }
+
+        if (tb.IsFocused)
+        {
+            MoveCaret();
+            return;
+        }
+
+        // Gaining focus can select or reposition text, so place the caret again once it settled.
+        ActivateWindow(Window);
+        tb.Focus();
+        MoveCaret();
+        Dispatcher.UIThread.Post(MoveCaret, DispatcherPriority.Background);
+    }
+
+    [RelayCommand]
+    private void FocusOriginalTextBox()
+    {
+        if (!ShowColumnOriginalText)
+        {
+            return;
+        }
+
+        FocusEditTextBox(true);
     }
 
     [RelayCommand]
@@ -26502,7 +26632,7 @@ public partial class MainViewModel :
         var detach = grid != null && ReferenceEquals(grid.ItemsSource, Subtitles);
         if (detach)
         {
-            grid!.ItemsSource = null;
+            DetachSubtitleGridItemsSource(grid!);
         }
 
         Subtitles.Clear();
@@ -26516,9 +26646,40 @@ public partial class MainViewModel :
         ReDetectSpellCheckLanguageIfPending();
     }
 
+    /// <summary>
+    /// Takes the ItemsSource off the grid for a bulk rebuild. SelectionChanged is held off until the
+    /// detach is done: letting its handler run in the middle of it left the TableView's selection
+    /// out of step - on reattach the grid kept the old SelectedIndex (now a different row) with
+    /// SelectedItems empty, and from then on assigning SelectedItem moved the highlight and
+    /// SelectedSubtitle but not the grid's own SelectedItem. A grid double-click reads that, so it
+    /// seeked the video to the same line every time until the next rebuild reset it (#15579: sort
+    /// once breaks seeking, sort again fixes it). The view model is then cleared the same way the
+    /// handler would have, once the grid is settled.
+    /// </summary>
+    private void DetachSubtitleGridItemsSource(TableView grid)
+    {
+        var wasSkipping = _subtitleGridSelectionChangedSkip;
+        _subtitleGridSelectionChangedSkip = true;
+        try
+        {
+            grid.ItemsSource = null;
+        }
+        finally
+        {
+            _subtitleGridSelectionChangedSkip = wasSkipping;
+        }
+
+        if (!wasSkipping)
+        {
+            _shiftSelectAnchorIndex = -1;
+            _shiftSelectCurrentIndex = -1;
+            SubtitleGridSelectionChanged();
+        }
+    }
+
     private void SetSubtitles(Subtitle subtitle, Subtitle? subtitleOriginal = null)
     {
-        SubtitleGrid.ItemsSource = null;
+        DetachSubtitleGridItemsSource(SubtitleGrid);
 
         Subtitles.Clear();
         foreach (var p in subtitle.Paragraphs)
@@ -26584,7 +26745,7 @@ public partial class MainViewModel :
 
     private void SetSubtitles(List<SubtitleLineViewModel> subtitles)
     {
-        SubtitleGrid.ItemsSource = null;
+        DetachSubtitleGridItemsSource(SubtitleGrid);
 
         Subtitles.Clear();
         foreach (var p in subtitles)
@@ -27012,6 +27173,29 @@ public partial class MainViewModel :
         return AddVideoOffset(GetUpdateSubtitle());
     }
 
+    /// <summary>
+    /// The subtitle a File > Export writes: <see cref="GetSaveSubtitle"/>, and for ASSA/SSA
+    /// without the {comment} blocks - renderers never draw those, but the export formats would
+    /// write them as text (#15584). The override tags stay for the exporter to convert.
+    /// </summary>
+    internal Subtitle GetExportSubtitle()
+    {
+        var subtitle = GetSaveSubtitle();
+        if (!IsFormatAssaOrSsa)
+        {
+            return subtitle;
+        }
+
+        // generateNewId false: bookmarks and marks are matched on the paragraph ids.
+        var copy = new Subtitle(subtitle, false);
+        foreach (var p in copy.Paragraphs)
+        {
+            p.Text = AdvancedSubStationAlpha.RemoveCommentBlocks(p.Text);
+        }
+
+        return copy;
+    }
+
     /// <summary>Same as <see cref="GetSaveSubtitle"/> for the original subtitle.</summary>
     public Subtitle GetSaveSubtitleOriginal()
     {
@@ -27261,7 +27445,7 @@ public partial class MainViewModel :
         // converting it to SubRip suggested "movie.srt" instead of "movie.da.srt" (#15530).
         if (string.IsNullOrEmpty(_saveAsFileNameSuggestion) && !string.IsNullOrEmpty(_subtitleFileName))
         {
-            newFileName = KeepSubtitleLanguageSuffix(newFileName, GetFileNameWithoutExtension(_subtitleFileName));
+            newFileName = KeepSubtitleLanguageSuffix(newFileName, GetFileNameWithoutExtension(_subtitleFileName), Se.Settings.General.SaveAsAppendLanguageCode);
         }
 
         newFileName = AppendLanguageCodeToFileName(newFileName, GetUpdateSubtitle());
@@ -27394,10 +27578,14 @@ public partial class MainViewModel :
     /// language tag ("movie" vs "movie.da" or "movie.da.forced"), appends that tag so the
     /// tag survives a format change. The suggestion's folder is kept. Otherwise returns the
     /// suggestion unchanged. Both names are without extension.
+    /// When "Save as" appends a language code anyway (<paramref name="saveAsAppendLanguageCode"/> is
+    /// not None), the old tag is not kept: the appended code would follow it ("movie.da.forced.da",
+    /// or "movie.en.da" for a translation).
     /// </summary>
-    internal static string KeepSubtitleLanguageSuffix(string suggestion, string subtitleFileNameWithoutExtension)
+    internal static string KeepSubtitleLanguageSuffix(string suggestion, string subtitleFileNameWithoutExtension, string? saveAsAppendLanguageCode = nameof(SaveAsLanguageAppendType.None))
     {
-        if (string.IsNullOrEmpty(suggestion) || string.IsNullOrEmpty(subtitleFileNameWithoutExtension))
+        if (string.IsNullOrEmpty(suggestion) || string.IsNullOrEmpty(subtitleFileNameWithoutExtension) ||
+            (!string.IsNullOrEmpty(saveAsAppendLanguageCode) && saveAsAppendLanguageCode != nameof(SaveAsLanguageAppendType.None)))
         {
             return suggestion;
         }
@@ -28376,7 +28564,7 @@ public partial class MainViewModel :
             spectrogramFileName,
             wavePeaks,
             TryLoadCachedSpectrogram(spectrogramFileName),
-            ShotChangesHelper.FromDisk(videoFileName));
+            ShotChangesHelper.FromDisk(videoFileName, trackNumber));
     }
 
     private void ShowClickToGenerateWaveformHint()
@@ -29671,7 +29859,7 @@ public partial class MainViewModel :
 
             if (isLargeDelete)
             {
-                SubtitleGrid.ItemsSource = null;
+                DetachSubtitleGridItemsSource(SubtitleGrid);
             }
 
             for (var i = Subtitles.Count - 1; i >= 0 && removeSet.Count > 0; i--)
@@ -34038,10 +34226,11 @@ public partial class MainViewModel :
 
     private void UpdateTitleStatus(int mainHash, int originalHash)
     {
+        var fullPath = Se.Settings.General.TitleBarFullFileName;
         var text = Se.Language.General.Untitled;
         if (!string.IsNullOrEmpty(_subtitleFileName))
         {
-            text = Path.GetFileName(_subtitleFileName);
+            text = fullPath ? _subtitleFileName : Path.GetFileName(_subtitleFileName);
         }
 
         if (ShowColumnOriginalText)
@@ -34059,7 +34248,7 @@ public partial class MainViewModel :
             }
             else
             {
-                text += Path.GetFileName(_subtitleFileNameOriginal);
+                text += fullPath ? _subtitleFileNameOriginal : Path.GetFileName(_subtitleFileNameOriginal);
             }
         }
 
@@ -35402,6 +35591,27 @@ public partial class MainViewModel :
         }
     }
 
+    /// <summary>
+    /// ASSA/SSA renderers never draw a {...} block, so fansubbers use {comment} for notes - the
+    /// character counters (CPS, line length) skip those blocks for these formats only, as a brace
+    /// is real text in the others (#15584).
+    /// </summary>
+    private void UpdateIgnoreAssaCommentBlocks()
+    {
+        var ignore = SelectedSubtitleFormat is AdvancedSubStationAlpha or SubStationAlpha;
+        if (CalcFactory.IgnoreAssaCommentBlocks == ignore)
+        {
+            return;
+        }
+
+        CalcFactory.IgnoreAssaCommentBlocks = ignore;
+        foreach (var row in Subtitles)
+        {
+            row.ClearStrippedTextCaches();
+            row.RefreshAfterSettingsChanged();
+        }
+    }
+
     internal void ComboBoxSubtitleFormatChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (!_changingFormatProgrammatically)
@@ -35417,6 +35627,7 @@ public partial class MainViewModel :
         IsFormatEbu = SelectedSubtitleFormat is Ebu;
         IsFormatTeletext = SelectedSubtitleFormat is Ebu or DvbTeletext;
         UpdateTeletextLineLength();
+        UpdateIgnoreAssaCommentBlocks();
 
         UpdateTemporaryFrameMode();
 

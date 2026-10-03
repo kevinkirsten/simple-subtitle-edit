@@ -21,7 +21,7 @@ public class Se
     internal const int CurrentShortcutsMigrationVersion = 5;
     internal const int CurrentLayoutMigrationVersion = 2;
 
-    public static string Version { get; set; } = "v5.3.0-beta18";
+    public static string Version { get; set; } = "v5.3.0-beta20";
 
     public SeGeneral General { get; set; } = new();
     public List<SeShortCut> Shortcuts { get; set; } = new();
@@ -1493,12 +1493,14 @@ public class Se
 
     public static void LogError(Exception exception)
     {
-        LogError(exception.Message + Environment.NewLine + exception.StackTrace);
+        // ToString() includes the inner exceptions - a window created via reflection otherwise
+        // only logs "Exception has been thrown by the target of an invocation" (#15562).
+        LogError(exception.ToString());
     }
 
     public static void LogError(Exception exception, string message)
     {
-        LogError(exception.Message + Environment.NewLine + message + Environment.NewLine + exception.StackTrace);
+        LogError(message + Environment.NewLine + exception);
     }
 
     private static readonly ErrorLogThrottle ErrorThrottle = new();

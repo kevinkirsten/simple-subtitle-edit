@@ -102,6 +102,7 @@ public class LanguageSettings
     public string MoveLinesShortenNeighbor { get; set; }
     public string PromptBeforeDelete { get; set; }
     public string RememberPositionAndSize { get; set; }
+    public string TitleBarFullFileName { get; set; }
     public string OpenLastFileOnStart { get; set; }
     public string AutoSave { get; set; }
     public string AutoBackupOn { get; set; }
@@ -329,6 +330,7 @@ public class LanguageSettings
     public string AllSettings { get; set; }
     public string UiScale { get; set; }
     public string FontScale { get; set; }
+    public string TextSelectionOpacity { get; set; }
     public string WaveformToolbarItems { get; set; }
     public string MatchIconColorToDarkTheme { get; set; }
     public string SubtitlePreviewProperties { get; set; }
@@ -452,6 +454,7 @@ public class LanguageSettings
         MoveLinesShortenNeighbor = "Move lines: shorten previous/next line instead of overlapping it";
         PromptBeforeDelete = "Prompt before delete";
         RememberPositionAndSize = "Remember window position and size";
+        TitleBarFullFileName = "Show full file path in title bar";
         OpenLastFileOnStart = "Open last recent file on start";
         AutoSave = "Auto-save (save the open file while editing)";
         AutoBackupOn = "Auto-backup";
@@ -678,6 +681,7 @@ public class LanguageSettings
         AllSettings = "All settings";
         UiScale = "UI scale (%)";
         FontScale = "Font scale (%)";
+        TextSelectionOpacity = "Text selection opacity (%)";
         WaveformToolbarItems = "Waveform toolbar items";
         MatchIconColorToDarkTheme = "Match icon color to dark theme foreground color";
         SubtitlePreviewProperties = "Subtitle preview properties";

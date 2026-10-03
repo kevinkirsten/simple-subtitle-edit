@@ -16,6 +16,7 @@ public class LanguageSettingsShortcuts
     public string CategoryAi { get; set; }
     public string CategoryCustom { get; set; }
     public string EditCustomShortcut { get; set; }
+    public string CustomShortcutTextBoxKeyHint { get; set; }
     public string CustomShortcutNumberX { get; set; }
     public string CustomShortcutNumberXY { get; set; }
     public string CustomShortcutStep { get; set; }
@@ -233,6 +234,7 @@ public class LanguageSettingsShortcuts
     public string SurroundWithBehaviorToggle { get; set; }
     public string SurroundWithBehaviorAdd { get; set; }
     public string SurroundWithBehaviorRemove { get; set; }
+    public string SurroundWithBehaviorRemoveOnce { get; set; }
     public string SurroundWithWorksOn { get; set; }
     public string SurroundWithScopeSelectionOrText { get; set; }
     public string SurroundWithScopeEachLine { get; set; }
@@ -263,6 +265,11 @@ public class LanguageSettingsShortcuts
     public string CopySubtitlePathToClipboard { get; set; }
     public string CopySubtitleOriginalPathToClipboard { get; set; }
     public string FocusTextBox { get; set; }
+    public string FocusSubtitleListView { get; set; }
+    public string FocusWaveform { get; set; }
+    public string FocusOriginalTextBox { get; set; }
+    public string TextBoxGoToStart { get; set; }
+    public string TextBoxGoToEnd { get; set; }
     public string SortByNumber { get; set; }
     public string SortByStartTime { get; set; }
     public string SortByEndTime { get; set; }
@@ -340,6 +347,7 @@ public class LanguageSettingsShortcuts
         CategoryAi = "AI";
         CategoryCustom = "Custom";
         EditCustomShortcut = "Edit custom shortcut";
+        CustomShortcutTextBoxKeyHint = "Use a key with Ctrl/Alt here - a plain key would no longer type in the text box.";
         CustomShortcutNumberX = "Custom shortcut #{0}";
         CustomShortcutNumberXY = "Custom shortcut #{0}: {1}";
         CustomShortcutStep = "Step";
@@ -561,7 +569,8 @@ public class LanguageSettingsShortcuts
         SurroundWithBehavior = "Behavior";
         SurroundWithBehaviorToggle = "Toggle (add, or remove if present)";
         SurroundWithBehaviorAdd = "Add (every time)";
-        SurroundWithBehaviorRemove = "Remove";
+        SurroundWithBehaviorRemove = "Remove (all)";
+        SurroundWithBehaviorRemoveOnce = "Remove (one each time)";
         SurroundWithWorksOn = "Works on";
         SurroundWithScopeSelectionOrText = "Selection, else whole text";
         SurroundWithScopeEachLine = "Each line";
@@ -592,6 +601,11 @@ public class LanguageSettingsShortcuts
         CopySubtitlePathToClipboard = "Copy subtitle path to clipboard";
         CopySubtitleOriginalPathToClipboard = "Copy subtitle path of original to clipboard";
         FocusTextBox = "Focus text box";
+        FocusSubtitleListView = "Focus subtitle list view";
+        FocusWaveform = "Focus waveform";
+        FocusOriginalTextBox = "Focus original text box";
+        TextBoxGoToStart = "Text box, go to start";
+        TextBoxGoToEnd = "Text box, go to end";
         SortByNumber = "Sort by number";
         SortByStartTime = "Sort by \"Show\" time";
         SortByEndTime = "Sort by \"Hide\" time";

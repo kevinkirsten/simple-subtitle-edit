@@ -451,10 +451,25 @@ public class OcrWindow : Window
         // treated as 1* by its layout helper - so the narrow columns get pixel widths
         // measured from their widest content (the VM is initialized before the window
         // ctor, so the items are available here).
+        //
+        // Measure with the UI font the user picked - the FontManager default (Helvetica Neue
+        // on macOS) may not load at all, and a measuring failure must never stop the window
+        // from opening: fall back to a rough per-character estimate (#15562).
         const double cellChrome = 16; // cell padding/margins + slack
-        double MeasureWidth(string text) =>
-            new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-                Typeface.Default, 14, null).Width;
+        var measureTypeface = new Typeface(FontFamilyHelper.Make(Se.Settings.Appearance.FontName));
+        double MeasureWidth(string text)
+        {
+            try
+            {
+                return new FormattedText(text ?? string.Empty, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+                    measureTypeface, 14, null).Width;
+            }
+            catch (Exception exception)
+            {
+                Se.LogError(exception, "OcrWindow: could not measure text width");
+                return (text?.Length ?? 0) * 14 * 0.6;
+            }
+        }
         double ColumnWidth(string header, string widestCellText) =>
             Math.Max(MeasureWidth(header), MeasureWidth(widestCellText)) + cellChrome;
 
@@ -604,6 +619,11 @@ public class OcrWindow : Window
         TableViewExtras.ApplyDefaultRowNames(dataGridSubtitle); // #12087: rows are named from the columns
 
         var scrollBarHost = new TableViewIndexScrollBar(dataGridSubtitle);
+
+        // Keep the view on the row being edited when a row changes height (#13619, #15275):
+        // adding or removing a line in the edit box grows or shrinks the row, the virtualizing
+        // panel re-estimates its pixel extent, and the grid scrolled away from the line.
+        TableViewScrollAnchor.Attach(dataGridSubtitle);
 
         // The image thumbnails scale with Ctrl+plus/minus (Image.MaxWidth/MaxHeight are
         // bound to the VM) - keep the pixel-sized image column in step with the zoom.
@@ -807,8 +827,22 @@ public class OcrWindow : Window
         textBoxText.Bind(TextBox.FontWeightProperty, new Binding(nameof(vm.TextBoxFontWeight)) { Mode = BindingMode.TwoWay });
         UiUtil.FixMacDiacriticClipping(textBoxText);
 
-        // Create a Flyout for the TextBox
+        // Setting ContextFlyout replaces the TextBox's built-in Cut/Copy/Paste menu, so add
+        // those back above the font item (#15275)
         var flyout = new MenuFlyout();
+        var menuItemCut = new MenuItem { Header = Se.Language.General.Cut };
+        menuItemCut.Click += (_, _) => textBoxText.Cut();
+        flyout.Items.Add(menuItemCut);
+        var menuItemCopy = new MenuItem { Header = Se.Language.General.Copy };
+        menuItemCopy.Click += (_, _) => textBoxText.Copy();
+        flyout.Items.Add(menuItemCopy);
+        var menuItemPaste = new MenuItem { Header = Se.Language.General.Paste };
+        menuItemPaste.Click += (_, _) => textBoxText.Paste();
+        flyout.Items.Add(menuItemPaste);
+        var menuItemSelectAll = new MenuItem { Header = Se.Language.General.SelectAll };
+        menuItemSelectAll.Click += (_, _) => textBoxText.SelectAll();
+        flyout.Items.Add(menuItemSelectAll);
+        flyout.Items.Add(new Separator());
         var menuItemSetFont = new MenuItem
         {
             Header = Se.Language.General.SetFontDotDotDot,

@@ -12,6 +12,7 @@ Configure application preferences, rules and profiles, appearance, video player,
 
 1. Open **Options → Settings...**
 2. Pick a section from the icons on the left, or type in the **Search for settings...** box at the top to jump to a setting by name
+   - **Alt+Left** / **Alt+Right** (**Cmd+[** / **Cmd+]** on macOS) go back and forward through the sections you have visited, like in a web browser. The history is forgotten when Settings closes
 3. Adjust settings as needed
 4. Click **OK** to save
 
@@ -34,6 +35,7 @@ The subtitle rules that drive error checking, the grid's warning colors, and too
 - **Default new subtitle duration (ms)** - The duration a newly inserted subtitle gets, e.g. when inserting at the video position
 - **Time up/down increment (ms)** - The step of the start/end/duration up-down boxes in millisecond mode
 - **Prompt before delete**, **Lock time codes**, **Remember window position and size**
+- **Show full file path in title bar** — Show the subtitle file's full path in the main window title instead of only its name. Off by default
 - **Use frame mode (hh.mm.ss.ff)** — Show times as frames instead of milliseconds
 - **Limit number of lines in subtitle text box**
 - **Open last recent file on start**
@@ -66,9 +68,10 @@ The subtitle rules that drive error checking, the grid's warning colors, and too
 
 ## Video Player
 
-- **Video player** — Which player to use, plus **Download mpv** / **Download VLC** when the library is missing
+- **Video player** — Which player to use
 - **Video controls** (order and visibility of the controls under the video, see [Video Player](video-player.md#video-controls)), **Hide video controls in full-screen**, **Auto-open video file when opening subtitle**
 - **Subtitle preview properties** — Font name, size and bold, primary/outline/shadow colors, border style and outline/shadow width for the subtitle drawn on the video
+- **Download mpv** / **Download VLC** / **Download FFmpeg libraries** — Grouped at the bottom; fetch the library a player needs when it is not installed
 
 ## Waveform / Spectrogram
 
@@ -110,6 +113,7 @@ The subtitle rules that drive error checking, the grid's warning colors, and too
 ## Appearance
 
 - **Theme**, **icon theme**, **match icon color to dark theme foreground color**, **UI scale (%)**
+- **Text selection opacity (%)** — How strong the selection highlight in text boxes is. 100 (default) is the theme's solid highlight with white text; lower values make it see-through and keep the text in its own color
 - **Dark theme foreground / background color**, **focused button background color**
 - **UI font**, and a separate font for the subtitle text box and grid
 - **Grid** — Show subtitle text as single line (with the separator to use), text fit, [show formatted text](subtitle-grid.md#formatting-display), live spell check, **Center text in subtitle grid** (centers the text column, as Subtitle Edit 4 could), compact mode, alternating row colors (light and dark), grid lines, bookmark color

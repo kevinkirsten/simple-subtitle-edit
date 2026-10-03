@@ -221,6 +221,9 @@ public partial class SpeechToTextViewModel : ObservableObject
     private Process? _audioExtractProcess;
     private readonly System.Timers.Timer _timerAudioExtract = new();
     private volatile bool _windowClosing;
+    // Held while a transcription runs, so a long (batch) run is not cut short by the machine
+    // idling into sleep (#15552). Driven by IsTranscribeEnabled, which every end-of-run path resets.
+    private readonly SleepInhibitorScope _sleepInhibitor = new(Se.Language.Video.AudioToText.Title);
     private Stopwatch _sw = new();
     private StringBuilder _ffmpegLog = new();
     private readonly Lock _lockObj = new();
@@ -229,6 +232,9 @@ public partial class SpeechToTextViewModel : ObservableObject
     private string _error;
     private List<AudioClip>? _audioClips;
     private bool _audioClipsAutoStart;
+    // "Retry failed" for audio clips (#15497): the next batch run only takes the clips that
+    // did not get a transcription, so the ones that did are neither redone nor lost.
+    private bool _retryFailedClipsOnly;
     private string _qwen3AsrOutputJsonPath = string.Empty;
     private int? _engineExitCode;
 
@@ -999,7 +1005,9 @@ public partial class SpeechToTextViewModel : ObservableObject
     /// the transcription log says it succeeded but no segments are emitted. Cohere gets the same
     /// treatment because crispasr auto-enables VAD for that backend on long audio anyway; passing
     /// the bundled Silero model keeps it from downloading its own copy into ~/.cache/crispasr
-    /// mid-transcription.
+    /// mid-transcription. Index-Echo windows its audio on Silero speech boundaries when it has the
+    /// model and falls back to fixed 60 s windows otherwise, which cut sentences in half and repeated
+    /// a cue at the seam.
     ///
     /// --chunk-seconds/-ck in the user's parameters means "no VAD, use fixed chunks" - that is
     /// crispasr's own documented way to switch its auto-VAD back off, and it is the only way to
@@ -1011,7 +1019,7 @@ public partial class SpeechToTextViewModel : ObservableObject
     /// </param>
     internal static bool ShouldForceCrispAsrVad(ISpeechToTextEngine engine, string? crispArgs, bool vadSuppressed)
     {
-        if (engine is not (CrispAsrCohere or CrispAsrMega) || vadSuppressed)
+        if (engine is not (CrispAsrCohere or CrispAsrMega or CrispAsrIndexEcho) || vadSuppressed)
         {
             return false;
         }
@@ -1039,7 +1047,7 @@ public partial class SpeechToTextViewModel : ObservableObject
     /// was the crispasr v0.8.29 GPU packages, built with AVX-512 against a CI runner that had it
     /// (CrispASR #374) - every CPU without AVX-512 got this on the CUDA/Vulkan build while the CPU
     /// build ran fine, so naming the installed package is most of the answer. That build flaw is
-    /// fixed from v0.8.30 (SE now pins v0.8.40), but the message still earns its keep: a pre-AVX2 CPU
+    /// fixed from v0.8.30 (SE now pins v0.8.41), but the message still earns its keep: a pre-AVX2 CPU
     /// hits the same silent death on the AVX2 CPU package, and an install predating the pin bump
     /// keeps the broken GPU binary until the user downloads the engine again.
     /// </summary>
@@ -2114,10 +2122,9 @@ public partial class SpeechToTextViewModel : ObservableObject
             EstimatedText = string.Empty;
             ElapsedText = string.Empty;
 
-            if (_audioClips != null && failed == 0)
+            if (_audioClips != null)
             {
-                OkPressed = true;
-                Window?.Close();
+                await FinishAudioClips();
                 return;
             }
 
@@ -2136,6 +2143,94 @@ public partial class SpeechToTextViewModel : ObservableObject
                 Window?.Close();
             }
         });
+    }
+
+    private int CountTranscribedAudioClips() => ResultAudioClips.Count(p => p.Transcription.Paragraphs.Count > 0);
+
+    /// <summary>
+    /// End of an audio clip run ("speech to text selected lines"). The clips that were
+    /// transcribed are delivered even when others failed - a clip of only music or silence
+    /// comes back empty and counts as failed, and that used to throw away every other line of
+    /// the run (#15497). With failures the user picks: apply what was transcribed, retry only
+    /// the failed clips, or go back to the dialog.
+    /// </summary>
+    private async Task FinishAudioClips()
+    {
+        var total = ResultAudioClips.Count;
+        var transcribed = CountTranscribedAudioClips();
+        if (transcribed == total)
+        {
+            OkPressed = true;
+            Window?.Close();
+            return;
+        }
+
+        if (transcribed == 0)
+        {
+            await MessageBox.Show(
+                Window!,
+                Se.Language.Video.AudioToText.Title,
+                string.Format(Se.Language.Video.AudioToText.NoLinesTranscribed, total),
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            IsTranscribeEnabled = true;
+            return;
+        }
+
+        var answer = await MessageBox.Show(
+            Window!,
+            Se.Language.Video.AudioToText.Title,
+            string.Format(Se.Language.Video.AudioToText.LinesTranscribedXOfYFailedZ, transcribed, total, total - transcribed),
+            MessageBoxButtons.Cancel,
+            MessageBoxIcon.Question,
+            Se.Language.Video.AudioToText.ApplyTranscribedLines,
+            Se.Language.Video.AudioToText.RetryFailedLines);
+
+        IsTranscribeEnabled = true;
+        if (answer == MessageBoxResult.Custom1)
+        {
+            OkPressed = true;
+            Window?.Close();
+        }
+        else if (answer == MessageBoxResult.Custom2)
+        {
+            _retryFailedClipsOnly = true;
+            Dispatcher.UIThread.Post(() => TranscribeCommand.Execute(null));
+        }
+    }
+
+    /// <summary>
+    /// A cancelled audio clip run: the clips finished before the cancel are offered instead of
+    /// being dropped with the rest (#15497). Returns true when the dialog was closed with them.
+    /// </summary>
+    private async Task<bool> OfferTranscribedAudioClipsAfterCancel()
+    {
+        if (_audioClips == null)
+        {
+            return false;
+        }
+
+        var transcribed = CountTranscribedAudioClips();
+        if (transcribed == 0)
+        {
+            return false;
+        }
+
+        var answer = await MessageBox.Show(
+            Window!,
+            Se.Language.Video.AudioToText.Title,
+            string.Format(Se.Language.Video.AudioToText.LinesTranscribedXOfYCancelled, transcribed, ResultAudioClips.Count),
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (answer != MessageBoxResult.Yes)
+        {
+            return false;
+        }
+
+        OkPressed = true;
+        Window?.Close();
+        return true;
     }
 
     public static string GetSubtitleFileName(string videoFileName, string? languageCode, string? outputFolder = null)
@@ -2538,7 +2633,7 @@ public partial class SpeechToTextViewModel : ObservableObject
         {
             Start = (decimal)p.StartTime.TotalSeconds,
             End = (decimal)p.EndTime.TotalSeconds,
-            Text = p.Text
+            Text = engine is CrispAsrIndexEcho ? CrispAsrIndexEcho.GetTranslation(p.Text) : p.Text
         }).ToList();
 
         if (!string.IsNullOrEmpty(srtFileName))
@@ -2745,6 +2840,7 @@ public partial class SpeechToTextViewModel : ObservableObject
             // batch must stop the whole batch, not skip to the next item.
             IsTranscribeEnabled = true;
             HideProgressBar();
+            await OfferTranscribedAudioClipsAfterCancel();
         }
         else if (IsBatchMode)
         {
@@ -3864,6 +3960,8 @@ public partial class SpeechToTextViewModel : ObservableObject
         return vm.OkPressed;
     }
 
+    partial void OnIsTranscribeEnabledChanged(bool value) => _sleepInhibitor.SetActive(!value);
+
     [RelayCommand]
     private async Task Transcribe()
     {
@@ -4155,16 +4253,37 @@ public partial class SpeechToTextViewModel : ObservableObject
             // do not touch BatchItems here - it holds the user's queued batch list
             _jobItems = new List<SpeechToTextJobItem> { new SpeechToTextJobItem(_videoFileName, string.Empty, mediaInfo) };
         }
+        else if (_retryFailedClipsOnly && _audioClips != null)
+        {
+            _retryFailedClipsOnly = false;
+            _jobItems = BatchItems.Where(p => p.Status != Se.Language.General.Converted).ToList();
+            ResetBatchStatuses(_jobItems);
+        }
         else
         {
             _jobItems = BatchItems;
             ResetBatchStatuses(_jobItems);
         }
 
+        // A clip that is run again must not keep the text of an earlier run - it would be
+        // applied to its line even when this run fails on it.
+        if (_audioClips != null)
+        {
+            foreach (var jobItem in _jobItems)
+            {
+                var clip = ResultAudioClips.FirstOrDefault(p => p.AudioFileName == jobItem.InputVideoFileName);
+                if (clip != null)
+                {
+                    clip.Transcription = new Subtitle();
+                }
+            }
+        }
+
         _batchIndex = 0;
 
         if (_jobItems.Count == 0)
         {
+            IsTranscribeEnabled = true;
             return;
         }
 
@@ -4222,6 +4341,10 @@ public partial class SpeechToTextViewModel : ObservableObject
         }
 
         IsTranscribeEnabled = true;
+        if (_abort)
+        {
+            Dispatcher.UIThread.Post(async () => await OfferTranscribedAudioClipsAfterCancel());
+        }
     }
 
     [RelayCommand]
@@ -4605,6 +4728,12 @@ public partial class SpeechToTextViewModel : ObservableObject
             var langPart = crispAsrEngine.IncludeLanguage || langCode == "auto"
                 ? $"-l {langCode} "
                 : string.Empty;
+            if (crispAsrEngine is CrispAsrIndexEcho)
+            {
+                // A speech translation model: the language list is the target, the source is Chinese.
+                langPart = $"--target-lang {langCode} ";
+            }
+
             var alignerPart = string.Empty;
             var selectedAligner = SelectedForcedAligner ?? ForcedAlignerOption.BuiltIn();
             if (!selectedAligner.IsBuiltIn)
@@ -5997,6 +6126,7 @@ public partial class SpeechToTextViewModel : ObservableObject
         // an orphan burning CPU in the background.
         KillRunningProcesses();
         _openAiCts?.Cancel();
+        _sleepInhibitor.Dispose();
 
         UiUtil.SaveWindowPosition(Window);
         Task.Run(() => { DeleteTempFiles(); });

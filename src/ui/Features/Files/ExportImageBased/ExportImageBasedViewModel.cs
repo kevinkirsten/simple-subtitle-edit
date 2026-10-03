@@ -1,4 +1,4 @@
-using Nikse.SubtitleEdit.UiLogic.Export;
+﻿using Nikse.SubtitleEdit.UiLogic.Export;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Nikse.SubtitleEdit.Core.BluRaySup;
 using Nikse.SubtitleEdit.Core.Common;
+using Nikse.SubtitleEdit.Core.SubtitleFormats;
 using Nikse.SubtitleEdit.Features.Main;
 using Nikse.SubtitleEdit.Features.Shared;
 using Nikse.SubtitleEdit.Features.Shared.PromptFileSaved;
@@ -132,12 +133,19 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
     public TableView SubtitleGrid { get; set; }
 
     private List<SubtitleLineViewModel>? _selectedSubtitles;
+
+    // The profile whose frame rate UseVideoFrameRate replaced for this export, its own frame
+    // rate, and the video's - so closing the dialog doesn't write the video's rate into it.
+    private SeExportImagesProfile? _videoFrameRateProfile;
+    private double _videoFrameRateProfileValue;
+    private double _videoFrameRate;
     // PlayResX/PlayResY from the subtitle's own header - "\pos" coordinates and
     // "\bord"/"\shad" widths are relative to those, not to the export canvas. (0,0) when
     // there is no header, which keeps everything at scale 1.0.
     private int _scriptWidth;
     private int _scriptHeight;
     private bool _dirty;
+    private bool _removeAssaCommentBlocks;
     private Stereo3DPlane? _plane3D;
     private readonly Lock _generateLock;
     private bool _isCtrlDown;
@@ -560,7 +568,10 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
             PaddingLeftRight = SelectedPaddingLeftRight,
             PaddingTopBottom = SelectedPaddingTopBottom,
             Index = i,
-            Text = ExportTextTags.ToRenderableText(subtitle.Text),
+            // ASSA renderers never draw a {comment} block, so neither does the image (#15584).
+            Text = ExportTextTags.ToRenderableText(_removeAssaCommentBlocks
+                ? AdvancedSubStationAlpha.RemoveCommentBlocks(subtitle.Text)
+                : subtitle.Text),
             StartTime = subtitle.StartTime,
             EndTime = subtitle.EndTime,
             // Carry the forced flag through: BDN XML writes it as Forced="..." and the
@@ -697,10 +708,12 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
         string? subtitleFileName,
         string? videoFileName,
         string? subtitleHeader = null,
-        bool hideExportButton = false)
+        bool hideExportButton = false,
+        bool removeAssaCommentBlocks = false)
     {
         Subtitles.Clear();
         Subtitles.AddRange(subtitles);
+        _removeAssaCommentBlocks = removeAssaCommentBlocks;
         IsExportButtonVisible = !hideExportButton;
         _exportImageHandler = exportHandler;
         _subtitleFileName = subtitleFileName;
@@ -719,6 +732,14 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
         UpdateDepth3DEnabled();
 
         SelectedSubtitle = Subtitles.FirstOrDefault();
+
+        // A Blu-ray sup's cue times are snapped to the frame grid of the frame rate, so the
+        // profile's rate (25 by default) would move 23.976 cues up to half a frame. With a video
+        // open, the main window's frame rate is the video's - use it for this export.
+        if (exportHandler.ExportImageType == ExportImageType.BluRaySup && !string.IsNullOrEmpty(videoFileName))
+        {
+            UseVideoFrameRate(Se.Settings.General.CurrentFrameRate);
+        }
 
         if (!string.IsNullOrEmpty(videoFileName))
         {
@@ -741,6 +762,25 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
                 }
             });
         }
+    }
+
+    /// <summary>
+    /// Selects the video's frame rate when it is one of <see cref="FrameRates"/>, for this export
+    /// only: the active profile keeps its own frame rate unless the user changes the combo box,
+    /// and picking another profile selects that profile's frame rate.
+    /// </summary>
+    internal void UseVideoFrameRate(double videoFrameRate)
+    {
+        var match = FrameRates.Where(fr => Math.Abs(fr - videoFrameRate) < 0.01).ToList();
+        if (match.Count == 0)
+        {
+            return;
+        }
+
+        _videoFrameRateProfile = SelectedProfile;
+        _videoFrameRateProfileValue = SelectedFrameRate;
+        _videoFrameRate = match[0];
+        SelectedFrameRate = match[0];
     }
 
     private void SubtitleLineChanged()
@@ -1048,6 +1088,7 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
     {
         if (v is SeExportImagesProfile profile)
         {
+            _videoFrameRateProfile = null;
             SelectedFontSize = (int)profile.FontSize;
             SelectedResolution = EnsureResolutionItem(profile.ScreenWidth, profile.ScreenHeight)
                                  ?? Resolutions.FirstOrDefault(r => r.Width == 1920);
@@ -1133,7 +1174,9 @@ public partial class ExportImageBasedViewModel : ObservableObject, IClosingClean
             profile.PaddingLeftRight = SelectedPaddingLeftRight;
             profile.PaddingTopBottom = SelectedPaddingTopBottom;
             profile.LineSpacingPercent = SelectedLineSpacing;
-            profile.FramesPerSecond = SelectedFrameRate;
+            profile.FramesPerSecond = ReferenceEquals(profile, _videoFrameRateProfile) && SelectedFrameRate == _videoFrameRate
+                ? _videoFrameRateProfileValue
+                : SelectedFrameRate;
             profile.IsFullFrame = IsFullFrame;
             profile.FullFrameBackgroundColor = FullFrameBackgroundColor.FromColorToHex(true);
             profile.Mode3D = SelectedMode3D?.Mode ?? Export3DMode.None;

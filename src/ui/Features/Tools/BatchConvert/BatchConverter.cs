@@ -719,78 +719,7 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
             return new List<BluRaySupParser.PcsData>();
         }
 
-        var sub = matroska.GetSubtitle(track.TrackNumber, null);
-        var subtitles = new List<BluRaySupParser.PcsData>();
-        var log = new StringBuilder();
-        var clusterStream = new MemoryStream();
-        var lastPalettes = new Dictionary<int, List<PaletteInfo>>();
-        var lastBitmapObjects = new Dictionary<int, List<BluRaySupParser.OdsData>>();
-        foreach (var p in sub)
-        {
-            byte[] buffer = p.GetData(track);
-            if (buffer != null && buffer.Length > 2)
-            {
-                clusterStream.Write(buffer, 0, buffer.Length);
-                if (ContainsBluRayStartSegment(buffer))
-                {
-                    if (subtitles.Count > 0 && subtitles[subtitles.Count - 1].StartTime == subtitles[subtitles.Count - 1].EndTime)
-                    {
-                        subtitles[subtitles.Count - 1].EndTime = (long)((p.Start - 1) * 90.0);
-                    }
-
-                    clusterStream.Position = 0;
-                    var list = BluRaySupParser.ParseBluRaySup(clusterStream, log, true, lastPalettes, lastBitmapObjects);
-                    foreach (var sup in list)
-                    {
-                        sup.StartTime = (long)((p.Start - 1) * 90.0);
-                        sup.EndTime = (long)((p.End - 1) * 90.0);
-                        subtitles.Add(sup);
-
-                        // fix overlapping
-                        if (subtitles.Count > 1 && sub[subtitles.Count - 2].End > sub[subtitles.Count - 1].Start)
-                        {
-                            subtitles[subtitles.Count - 2].EndTime = subtitles[subtitles.Count - 1].StartTime - 1;
-                        }
-                    }
-
-                    clusterStream = new MemoryStream();
-                }
-            }
-            else if (subtitles.Count > 0)
-            {
-                var lastSub = subtitles[subtitles.Count - 1];
-                if (lastSub.StartTime == lastSub.EndTime)
-                {
-                    lastSub.EndTime = (long)((p.Start - 1) * 90.0);
-                    if (lastSub.EndTime - lastSub.StartTime > 1000000)
-                    {
-                        lastSub.EndTime = lastSub.StartTime;
-                    }
-                }
-            }
-        }
-
-        clusterStream.Dispose();
-        return subtitles;
-    }
-
-    private static bool ContainsBluRayStartSegment(byte[] buffer)
-    {
-        const int epochStart = 0x80;
-        var position = 0;
-        while (position + 3 <= buffer.Length)
-        {
-            var segmentType = buffer[position];
-            if (segmentType == epochStart)
-            {
-                return true;
-            }
-
-            int length = BluRaySupParser.BigEndianInt16(buffer, position + 1) + 3;
-            position += length;
-        }
-
-        return false;
+        return BluRaySupParser.ParseBluRaySupFromMatroska(track, matroska);
     }
 
     private async Task SaveCustomSubtitleFormat(BatchConvertItem item, CancellationToken cancellationToken)
@@ -817,7 +746,13 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
             return;
         }
 
-        var text = Nikse.SubtitleEdit.UiLogic.Export.CustomTextFormatter.GenerateCustomText(selectedCustomFormat.ToTemplate(), item.Subtitle.Paragraphs, item.FileName, string.Empty);
+        var paragraphs = item.Subtitle.Paragraphs;
+        if (IsAssaOrSsa(item.Subtitle))
+        {
+            paragraphs = paragraphs.Select(p => new Paragraph(p, false) { Text = AdvancedSubStationAlpha.RemoveCommentBlocks(p.Text) }).ToList();
+        }
+
+        var text = Nikse.SubtitleEdit.UiLogic.Export.CustomTextFormatter.GenerateCustomText(selectedCustomFormat.ToTemplate(), paragraphs, item.FileName, string.Empty);
         var path = MakeOutputFileName(item, selectedCustomFormat.Extension);
         await File.WriteAllTextAsync(path, text, cancellationToken);
     }
@@ -2076,6 +2011,13 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
                ?? new SeExportImagesProfile();
     }
 
+    /// <summary>
+    /// ASSA/SSA renderers never draw a {comment} block, so the exports that write the text
+    /// as-is (custom text format, images) must drop them for these sources (#15584).
+    /// </summary>
+    private static bool IsAssaOrSsa(Subtitle subtitle)
+        => subtitle.OriginalFormat is AdvancedSubStationAlpha or SubStationAlpha;
+
     private IOcrSubtitle? CreateImageSubtitles(BatchConvertItem item)
     {
         var profile = GetExportImagesProfile();
@@ -2093,6 +2035,7 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
             ? parsedPreset
             : TextEffectPreset.SoftShadow;
 
+        var removeAssaCommentBlocks = IsAssaOrSsa(item.Subtitle);
         var imageParameters = new List<ImageParameter>();
         for (var i = 0; i < item.Subtitle.Paragraphs.Count; i++)
         {
@@ -2108,7 +2051,9 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
                 PaddingLeftRight = profile.PaddingLeftRight,
                 PaddingTopBottom = profile.PaddingTopBottom,
                 Index = i,
-                Text = ExportTextTags.ToRenderableText(subtitle.Text),
+                Text = ExportTextTags.ToRenderableText(removeAssaCommentBlocks
+                    ? AdvancedSubStationAlpha.RemoveCommentBlocks(subtitle.Text)
+                    : subtitle.Text),
                 StartTime = subtitle.StartTime.TimeSpan,
                 EndTime = subtitle.EndTime.TimeSpan,
                 FontColor = profile.FontColor.FromHexToColor().ToSKColor(),
@@ -2240,7 +2185,31 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
             var ruleInfo = string.Empty;
             foreach (var item in replaceExpressions)
             {
-                if (item.SearchType == ReplaceExpression.SearchCaseSensitive)
+                if (item.WholeWordRegex != null)
+                {
+                    if (timedOut.Contains(item.FindWhat))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (item.WholeWordRegex.IsMatch(newText))
+                        {
+                            hit = true;
+                            ruleInfo = string.IsNullOrEmpty(ruleInfo) ? item.RuleInfo : $"{ruleInfo} + {item.RuleInfo}";
+
+                            // An evaluator so the replacement is literal text - a "$" in it is not a group reference.
+                            newText = item.WholeWordRegex.Replace(newText, _ => item.ReplaceWith);
+                        }
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        SeLogger.Error($"Batch convert, multiple replace: {DescribeRule(item)} timed out on line {i + 1} - skipping it for the rest of this file");
+                        timedOut.Add(item.FindWhat);
+                    }
+                }
+                else if (item.SearchType == ReplaceExpression.SearchCaseSensitive)
                 {
                     if (newText.Contains(item.FindWhat))
                     {
@@ -2313,6 +2282,13 @@ public class BatchConverter : IBatchConverter, IFixCallbacks
                 var replaceWith = isRegex ? RegexUtils.FixNewLine(rule.ReplaceWith) : rule.ReplaceWith;
 
                 var mpi = new ReplaceExpression(findWhat, replaceWith, rule.Type.ToString(), category.Name + ": " + rule.Description);
+                if (rule.WholeWord && !isRegex)
+                {
+                    // "Whole word" (#15510): "Zeyn" must not match inside "Zeynep" - the same regex
+                    // the Multiple replace window runs.
+                    mpi.WholeWordRegex = ReplaceExpression.CreateWholeWordRegex(findWhat, mpi.SearchType != ReplaceExpression.SearchCaseSensitive);
+                }
+
                 if (mpi.SearchType == ReplaceExpression.SearchRegEx && !_compiledRegExList.ContainsKey(findWhat))
                 {
                     try

@@ -1,3 +1,4 @@
+using Nikse.SubtitleEdit.Features.Options.Shortcuts;
 using Nikse.SubtitleEdit.Features.Options.Shortcuts.CustomShortcuts;
 using Nikse.SubtitleEdit.Logic.Config;
 using System.Text.Json;
@@ -47,6 +48,20 @@ public class CustomShortcutTests
 
         step = new SeCustomShortcutStep { Find = @"(\w+) (\w+)", ReplaceWith = "$2 $1", UseRegex = true };
         Assert.Equal("world hello", CustomShortcutText.Replace("hello world", step));
+    }
+
+    // A typed \n in the pattern must match a line break whether the text uses \r\n (Windows) or \n,
+    // like the Multiple replace window; the result keeps platform line breaks.
+    [Theory]
+    [InlineData("a\r\nb")]
+    [InlineData("a\nb")]
+    public void Replace_Regex_TypedNewLineMatchesAnyLineBreak(string text)
+    {
+        var step = new SeCustomShortcutStep { Find = @"a\nb", ReplaceWith = "x", UseRegex = true };
+        Assert.Equal("x", CustomShortcutText.Replace(text, step));
+
+        step = new SeCustomShortcutStep { Find = @"a\r\nb", ReplaceWith = @"b\na", UseRegex = true };
+        Assert.Equal("b" + Nl + "a", CustomShortcutText.Replace(text, step));
     }
 
     [Fact]
@@ -112,5 +127,32 @@ public class CustomShortcutTests
         Assert.True(result.Steps[0].UseRegex);
         Assert.Equal(CustomShortcutStepType.Replace, result.Steps[0].GetStepType());
         Assert.Equal("GoToNextLineCommand", result.Steps[1].ActionName);
+    }
+
+    [Fact]
+    public void ActiveIn_DefaultsToEverywhereAndSurvivesCloneAndUnknownValues()
+    {
+        var custom = new SeCustomShortcut();
+        Assert.Equal(ShortcutCategory.General, custom.GetActiveIn());
+
+        custom.ActiveIn = nameof(ShortcutCategory.TextBox);
+        Assert.Equal(ShortcutCategory.TextBox, custom.Clone().GetActiveIn());
+
+        custom.ActiveIn = "nonsense";
+        Assert.Equal(ShortcutCategory.General, custom.GetActiveIn());
+        custom.ActiveIn = null!;
+        Assert.Equal(ShortcutCategory.General, custom.GetActiveIn());
+    }
+
+    [Fact]
+    public void ActiveIn_RoundTripsThroughSettings()
+    {
+        var se = new Se();
+        se.SetCustomShortcut(5, new SeCustomShortcut { ActiveIn = nameof(ShortcutCategory.Waveform) });
+
+        var json = JsonSerializer.Serialize(se, SeJsonContext.Default.Se);
+        var loaded = JsonSerializer.Deserialize(json, SeJsonContext.Default.Se)!;
+
+        Assert.Equal(ShortcutCategory.Waveform, loaded.GetCustomShortcut(5).GetActiveIn());
     }
 }

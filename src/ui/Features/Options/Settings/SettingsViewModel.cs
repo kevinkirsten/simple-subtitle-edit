@@ -128,6 +128,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool _promptBeforeDelete;
     [ObservableProperty] private bool _lockTimeCodes;
     [ObservableProperty] private bool _rememberPositionAndSize;
+    [ObservableProperty] private bool _titleBarFullFileName;
     [ObservableProperty] private bool _openLastFileOnStart;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMsMode))]
@@ -380,6 +381,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool _matchIconColorToDarkTheme;
     [ObservableProperty] private int _layoutScale;
     [ObservableProperty] private int _fontScale;
+    [ObservableProperty] private int _textSelectionOpacity;
     [ObservableProperty] private ObservableCollection<string> _fontNames;
     [ObservableProperty] private string _selectedFontName;
     [ObservableProperty] private double _subtitleGridFontSize;
@@ -804,6 +806,7 @@ public partial class SettingsViewModel : ObservableObject
         PromptBeforeDelete = general.PromptBeforeDelete;
         LockTimeCodes = general.LockTimeCodes;
         RememberPositionAndSize = general.RememberPositionAndSize;
+        TitleBarFullFileName = general.TitleBarFullFileName;
         OpenLastFileOnStart = Se.Settings.File.OpenLastFileOnStart;
         AutoSave = general.AutoSave;
         AutoBackupOn = general.AutoBackupOn;
@@ -902,6 +905,7 @@ public partial class SettingsViewModel : ObservableObject
         MatchIconColorToDarkTheme = appearance.MatchIconColorToDarkTheme;
         LayoutScale = (int)Math.Round(appearance.LayoutScale * 100.0, MidpointRounding.AwayFromZero);
         FontScale = (int)Math.Round(appearance.FontScale * 100.0, MidpointRounding.AwayFromZero);
+        TextSelectionOpacity = appearance.TextSelectionOpacity;
         if (OperatingSystem.IsMacOS())
         {
             SelectedFontName = MapMacOsFontNameForDisplay(appearance.FontName, FontNames);
@@ -1702,6 +1706,7 @@ public partial class SettingsViewModel : ObservableObject
         general.PromptBeforeDelete = PromptBeforeDelete;
         general.LockTimeCodes = LockTimeCodes;
         general.RememberPositionAndSize = RememberPositionAndSize;
+        general.TitleBarFullFileName = TitleBarFullFileName;
         Se.Settings.File.OpenLastFileOnStart = OpenLastFileOnStart;
         general.AutoSave = AutoSave;
         general.AutoBackupOn = AutoBackupOn;
@@ -1773,6 +1778,7 @@ public partial class SettingsViewModel : ObservableObject
         appearance.MatchIconColorToDarkTheme = MatchIconColorToDarkTheme;
         appearance.LayoutScale = LayoutScale / 100.0;
         appearance.FontScale = FontScale / 100.0;
+        appearance.TextSelectionOpacity = Math.Clamp(TextSelectionOpacity, UiTheme.MinTextSelectionOpacity, 100);
         if (OperatingSystem.IsMacOS())
         {
             appearance.FontName = SelectedFontName == "System Font"
@@ -2738,6 +2744,59 @@ public partial class SettingsViewModel : ObservableObject
         ShowSection(candidates[index], NavigationMethod.Tab);
     }
 
+    // Categories visited in this Settings session, browser style (#14999). Forgotten on close.
+    private readonly List<SettingsSection> _sectionBackHistory = new();
+    private readonly List<SettingsSection> _sectionForwardHistory = new();
+    private bool _isNavigatingSectionHistory;
+
+    partial void OnSelectedSectionChanged(SettingsSection? oldValue, SettingsSection? newValue)
+    {
+        if (_isNavigatingSectionHistory || oldValue == null || newValue == null || oldValue == newValue)
+        {
+            return;
+        }
+
+        _sectionBackHistory.Add(oldValue);
+        _sectionForwardHistory.Clear();
+    }
+
+    /// <summary>
+    /// Alt+Left / Alt+Right (Cmd+[ / Cmd+] on macOS) step back and forward through the
+    /// categories visited in this Settings session, like a web browser (#14999). Categories
+    /// hidden by the search filter are skipped.
+    /// </summary>
+    internal void NavigateSectionHistory(bool back)
+    {
+        var from = back ? _sectionBackHistory : _sectionForwardHistory;
+        var to = back ? _sectionForwardHistory : _sectionBackHistory;
+        while (from.Count > 0)
+        {
+            var section = from[^1];
+            from.RemoveAt(from.Count - 1);
+            if (!section.IsVisible || section == SelectedSection)
+            {
+                continue;
+            }
+
+            if (SelectedSection != null)
+            {
+                to.Add(SelectedSection);
+            }
+
+            _isNavigatingSectionHistory = true;
+            try
+            {
+                ShowSection(section, NavigationMethod.Tab);
+            }
+            finally
+            {
+                _isNavigatingSectionHistory = false;
+            }
+
+            return;
+        }
+    }
+
     private void ShowSection(SettingsSection section, NavigationMethod navigationMethod)
     {
         SelectedSection = section; // the page rebuilds the content to this section
@@ -3159,6 +3218,23 @@ public partial class SettingsViewModel : ObservableObject
             e.Handled = true;
             SelectAdjacentSection(e.Key == Key.PageDown ? 1 : -1);
         }
+        else if (IsSectionHistoryKey(e, out var back))
+        {
+            e.Handled = true;
+            NavigateSectionHistory(back);
+        }
+    }
+
+    // Option+Left/Right moves by word in macOS text fields, so use the Safari/Firefox Cmd+[ / Cmd+] there.
+    private static bool IsSectionHistoryKey(KeyEventArgs e, out bool back)
+    {
+        back = e.Key is Key.Left or Key.OemOpenBrackets;
+        if (OperatingSystem.IsMacOS())
+        {
+            return e.KeyModifiers == KeyModifiers.Meta && e.Key is Key.OemOpenBrackets or Key.OemCloseBrackets;
+        }
+
+        return e.KeyModifiers == KeyModifiers.Alt && e.Key is Key.Left or Key.Right;
     }
 
     internal void Initialize(MainViewModel mainViewModel)
