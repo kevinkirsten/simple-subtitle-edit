@@ -64,14 +64,14 @@ Then Plex is told to reload the video, so the new subtitle is on the TV a few se
 <!-- downloads:start -->
 | | Download | |
 |---|---|---|
-| 🍎 **macOS** — Apple Silicon (M1–M5) | [**Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg) | Open it, drag the app to Applications |
-| 🍎 **macOS** — Intel | [Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg) | Open it, drag the app to Applications |
-| 🪟 **Windows** — most PCs | [**Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe) | Run it |
-| 🪟 **Windows** — ARM (Snapdragon, Surface Pro X) | [Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe) | Run it |
-| 🐧 **Ubuntu / Debian** | [simple-subtitle-edit_0.1.0_amd64.deb](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_amd64.deb) · [arm64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_arm64.deb) | `sudo apt install ./simple-subtitle-edit_*.deb` |
-| 🐧 **Fedora** | [simple-subtitle-edit-0.1.0-1.x86_64.rpm](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.x86_64.rpm) · [aarch64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.aarch64.rpm) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
+| 🍎 **macOS** — Apple Silicon (M1–M5) | [**Simple-Subtitle-Edit-0.1.1-macOS-Apple-Silicon.dmg**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-macOS-Apple-Silicon.dmg) | Open it, drag the app to Applications |
+| 🍎 **macOS** — Intel | [Simple-Subtitle-Edit-0.1.1-macOS-Intel.dmg](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-macOS-Intel.dmg) | Open it, drag the app to Applications |
+| 🪟 **Windows** — most PCs | [**Simple-Subtitle-Edit-0.1.1-Windows-x64-Setup.exe**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-Windows-x64-Setup.exe) | Run it |
+| 🪟 **Windows** — ARM (Snapdragon, Surface Pro X) | [Simple-Subtitle-Edit-0.1.1-Windows-arm64-Setup.exe](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-Windows-arm64-Setup.exe) | Run it |
+| 🐧 **Ubuntu / Debian** | [simple-subtitle-edit_0.1.1_amd64.deb](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit_0.1.1_amd64.deb) · [arm64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit_0.1.1_arm64.deb) | `sudo apt install ./simple-subtitle-edit_*.deb` |
+| 🐧 **Fedora** | [simple-subtitle-edit-0.1.1-1.x86_64.rpm](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit-0.1.1-1.x86_64.rpm) · [aarch64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit-0.1.1-1.aarch64.rpm) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
 
-Version 0.1.0 · [all files and release notes](https://github.com/kevinkirsten/simple-subtitle-edit/releases/tag/v0.1.0) · Windows without installer: [x64 zip](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-x64-portable.zip), [ARM zip](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-arm64-portable.zip)
+Version 0.1.1 · [all files and release notes](https://github.com/kevinkirsten/simple-subtitle-edit/releases/tag/v0.1.1) · Windows without installer: [x64 zip](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-Windows-x64-portable.zip), [ARM zip](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-Windows-arm64-portable.zip)
 <!-- downloads:end -->
 
 On macOS and Windows everything it needs (video player, ffmpeg, mkvmerge) is inside the app.
@@ -214,14 +214,14 @@ avisado e a legenda nova aparece na TV em segundos.
 <!-- downloads-pt:start -->
 | | Download | |
 |---|---|---|
-| 🍎 **macOS** — Apple Silicon (M1–M5) | [**Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Apple-Silicon.dmg) | Abra e arraste o app para Applications |
-| 🍎 **macOS** — Intel | [Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-macOS-Intel.dmg) | Abra e arraste o app para Applications |
-| 🪟 **Windows** — a maioria dos PCs | [**Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-x64-Setup.exe) | Execute |
-| 🪟 **Windows** — ARM (Snapdragon, Surface Pro X) | [Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/Simple-Subtitle-Edit-0.1.0-Windows-arm64-Setup.exe) | Execute |
-| 🐧 **Ubuntu / Debian** | [simple-subtitle-edit_0.1.0_amd64.deb](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_amd64.deb) · [arm64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit_0.1.0_arm64.deb) | `sudo apt install ./simple-subtitle-edit_*.deb` |
-| 🐧 **Fedora** | [simple-subtitle-edit-0.1.0-1.x86_64.rpm](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.x86_64.rpm) · [aarch64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.0/simple-subtitle-edit-0.1.0-1.aarch64.rpm) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
+| 🍎 **macOS** — Apple Silicon (M1–M5) | [**Simple-Subtitle-Edit-0.1.1-macOS-Apple-Silicon.dmg**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-macOS-Apple-Silicon.dmg) | Abra e arraste o app para Applications |
+| 🍎 **macOS** — Intel | [Simple-Subtitle-Edit-0.1.1-macOS-Intel.dmg](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-macOS-Intel.dmg) | Abra e arraste o app para Applications |
+| 🪟 **Windows** — a maioria dos PCs | [**Simple-Subtitle-Edit-0.1.1-Windows-x64-Setup.exe**](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-Windows-x64-Setup.exe) | Execute |
+| 🪟 **Windows** — ARM (Snapdragon, Surface Pro X) | [Simple-Subtitle-Edit-0.1.1-Windows-arm64-Setup.exe](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/Simple-Subtitle-Edit-0.1.1-Windows-arm64-Setup.exe) | Execute |
+| 🐧 **Ubuntu / Debian** | [simple-subtitle-edit_0.1.1_amd64.deb](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit_0.1.1_amd64.deb) · [arm64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit_0.1.1_arm64.deb) | `sudo apt install ./simple-subtitle-edit_*.deb` |
+| 🐧 **Fedora** | [simple-subtitle-edit-0.1.1-1.x86_64.rpm](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit-0.1.1-1.x86_64.rpm) · [aarch64](https://github.com/kevinkirsten/simple-subtitle-edit/releases/download/v0.1.1/simple-subtitle-edit-0.1.1-1.aarch64.rpm) | `sudo dnf install ./simple-subtitle-edit-*.rpm` |
 
-Versão 0.1.0 · [todos os arquivos e notas da versão](https://github.com/kevinkirsten/simple-subtitle-edit/releases/tag/v0.1.0)
+Versão 0.1.1 · [todos os arquivos e notas da versão](https://github.com/kevinkirsten/simple-subtitle-edit/releases/tag/v0.1.1)
 <!-- downloads-pt:end -->
 
 No macOS e no Windows tudo que ele precisa (player, ffmpeg, mkvmerge) vem dentro do app; no Linux
